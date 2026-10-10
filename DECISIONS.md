@@ -4,12 +4,12 @@ Build-window decisions and measured evidence, newest first. Network: Tempo Moder
 
 ## 2026-10-10 (Phase 0 spikes, real browser)
 
-Driver:  (headless Chrome over CDP with a WebAuthn virtual authenticator) loads  (), which runs the flow with the library in . Dev server on port 3100.
+Driver: `scripts/driver-spike.mjs` (headless Chrome over CDP with a WebAuthn virtual authenticator) loads `/spike` (`app/spike/page.tsx`), which runs the flow with the library in `lib/upkeep`. Dev server on port 3100.
 
-- **S1 passkey root in a browser: PASS.**  then  gave a Tempo address; the faucet funded it (1,000,000.00 AlphaUSD). Tested with a virtual authenticator, not yet on a real phone.
+- **S1 passkey root in a browser: PASS.** `WebAuthnP256.createCredential` then `Account.fromWebAuthnP256` gave a Tempo address; the faucet funded it (1,000,000.00 AlphaUSD). Tested with a virtual authenticator, not yet on a real phone.
 - **S3 passkey signs the key authorization: PASS.** The passkey account authorized the relative's key (limit 10, one payee); on-chain read-back showed scoped, remaining 10000000, one payee.
 - **S7 key persistence: PASS in desktop Chrome.** The WebCrypto key (non-extractable) was stored in IndexedDB and reloaded with the same key id. Not yet tested on iOS Safari or Android Chrome.
-- **S4 sponsorship through the real /api/relay route: PASS after one fix.** First run failed with "insufficient funds ... have 0 want 426" although the validator returned true and the sponsor signed. Cause: the sponsor had no preferred fee token, so the broadcast charged a token it did not hold. Fix: . After the fix a 4 AlphaUSD payment left the budget at exactly 6000000, and both refusals fired through the same path. Also found: killing a stale dev server needs the PID (netstat/Get-NetTCPConnection), not pkill.
+- **S4 sponsorship through the real /api/relay route: PASS after one fix.** First run failed with "insufficient funds ... have 0 want 426" although the validator returned true and the sponsor signed. Cause: the sponsor had no preferred fee token, so the broadcast charged a token it did not hold. Fix: `Relay.feePayer({ account, feeToken: TOKEN, validate })`. After the fix a 4 AlphaUSD payment left the budget at exactly 6000000, and both refusals fired through the same path. Also found: killing a stale dev server needs the PID (netstat/Get-NetTCPConnection), not pkill.
 - **S2 relative's key as a passkey: NOT RUN.** WebCrypto P256 is the chosen path; copy will say the key is on her phone and never claims a fingerprint.
 - **S8 free store: NOT RUN yet.**
 
