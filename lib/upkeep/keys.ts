@@ -1,4 +1,4 @@
-import type { Account as ViemAccount, Address, Chain, Client, Transport } from 'viem'
+import { getAddress, type Account as ViemAccount, type Address, type Chain, type Client, type Transport } from 'viem'
 import { Abis, Account, Actions } from 'viem/tempo'
 import { KEYCHAIN, TOKEN, type PublicClient } from './chain'
 
@@ -39,7 +39,7 @@ export async function authorizeKey(
 ) {
   assertPolicy(policy)
   return Actions.accessKey.authorizeSync(rootClient, {
-    accessKey: { address: key.address, type: key.type },
+    accessKey: { address: getAddress(key.address), type: key.type },
     expiry: policy.expiry,
     limits: [{ token: TOKEN, limit: policy.limit, period: policy.periodSeconds }],
     scopes: [{ address: TOKEN, selector: TRANSFER_SELECTOR, recipients: [...policy.payees] }],
@@ -47,7 +47,7 @@ export async function authorizeKey(
 }
 
 export async function revokeKey(rootClient: RootClient, key: KeyRef) {
-  return Actions.accessKey.revokeSync(rootClient, { accessKey: key.address })
+  return Actions.accessKey.revokeSync(rootClient, { accessKey: getAddress(key.address) })
 }
 
 export type KeyState = {
@@ -65,8 +65,11 @@ export type KeyState = {
 }
 
 /** Everything the parent screen and the sender console show about a key. Nothing is cached; every field is a chain read. */
-export async function readKeyState(client: PublicClient, account: Address, keyId: Address): Promise<KeyState> {
-  const arg = { account, accessKey: { address: keyId, type: 'p256' as const } }
+export async function readKeyState(client: PublicClient, accountIn: Address, keyIdIn: Address): Promise<KeyState> {
+  // viem encodes addresses strictly, so normalise lower-case ids (accessKeyAddress is lower-case) to checksum form
+  const account = getAddress(accountIn)
+  const keyId = getAddress(keyIdIn)
+  const arg = { account, accessKey: keyId }
   const [meta, lim, calls] = await Promise.all([
     Actions.accessKey.getMetadata(client as never, arg as never),
     Actions.accessKey.getRemainingLimit(client as never, { ...arg, token: TOKEN } as never),
