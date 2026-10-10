@@ -59,6 +59,34 @@ function nonce(v: unknown): string {
   return v
 }
 
+/**
+ * Payee names the sender typed, passed to the relative as display hints. The chain's payee list is the truth: a hint
+ * for an address that is not on the key's list is never used, and an address with no hint shows as a short address.
+ */
+export type PayeeHint = { address: Address; label: string }
+
+export function encodePayeeHint(items: readonly PayeeHint[]): string {
+  const clean = items.slice(0, 20).map((i) => ({ address: addr(i.address), label: cleanName(i.label) }))
+  return b64urlEncode(JSON.stringify(clean))
+}
+
+export function decodePayeeHint(token: string): PayeeHint[] {
+  try {
+    if (token.length > MAX_LEN) return []
+    const raw = JSON.parse(b64urlDecode(token))
+    if (!Array.isArray(raw)) return []
+    return raw.slice(0, 20).flatMap((r) => {
+      try {
+        return [{ address: addr(r?.address), label: cleanName(String(r?.label ?? '')) }]
+      } catch {
+        return []
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
 export function newNonce(): string {
   const b = new Uint8Array(16)
   crypto.getRandomValues(b)

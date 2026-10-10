@@ -1,6 +1,6 @@
 import { getAddress } from 'viem'
 import { describe, expect, it } from 'vitest'
-import { LinkError, decodeInvite, decodeKeyReturn, encodeInvite, encodeKeyReturn, newNonce } from '../lib/upkeep/links'
+import { LinkError, decodeInvite, decodeKeyReturn, decodePayeeHint, encodeInvite, encodeKeyReturn, encodePayeeHint, newNonce } from '../lib/upkeep/links'
 
 const SENDER = getAddress('0xa231eee840a316116fec11cca47c2059ca7d6793')
 const KEY = '0xab9574c02f00101506af242e4ec156963273d201'
@@ -30,6 +30,20 @@ describe('invite links', () => {
     expect(() => decodeInvite(keyToken)).toThrow(LinkError)
     const badAddr = btoa(JSON.stringify({ v: 1, t: 'invite', sender: '0x123', name: 'a', nonce: newNonce() })).replace(/=/g, '')
     expect(() => decodeInvite(badAddr)).toThrow(LinkError)
+  })
+})
+
+describe('payee hints', () => {
+  const A = getAddress('0x99a0d56c4c031c9e19b9bfaf2bb656e0b95e1882')
+  it('round-trips labels for valid addresses', () => {
+    const token = encodePayeeHint([{ address: A, label: 'Pharmacy' }])
+    expect(decodePayeeHint(token)).toEqual([{ address: A, label: 'Pharmacy' }])
+  })
+  it('drops bad entries instead of failing, and returns nothing for garbage', () => {
+    const mixed = btoa(JSON.stringify([{ address: 'nope', label: 'x' }, { address: A, label: 'Ok' }])).replace(/=/g, '')
+    expect(decodePayeeHint(mixed)).toEqual([{ address: A, label: 'Ok' }])
+    expect(decodePayeeHint('%%%')).toEqual([])
+    expect(decodePayeeHint('e30')).toEqual([])
   })
 })
 
