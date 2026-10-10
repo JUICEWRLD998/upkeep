@@ -6,6 +6,7 @@ export type ChainRefusalCode =
   | 'KeyExpired'
   | 'KeyNotFound'
   | 'InsufficientBalance'
+  | 'TransactionExpired'
   | 'Unknown'
 
 export type Refusal = {
@@ -23,6 +24,7 @@ const COPY: Record<Exclude<ChainRefusalCode, 'Unknown'>, string> = {
   KeyExpired: 'This key has expired. Ask the sender for a new one.',
   KeyNotFound: "The sender hasn't approved this key yet.",
   InsufficientBalance: "The sender's account doesn't have enough dollars right now.",
+  TransactionExpired: 'The network was slow and the payment timed out. Nothing was paid. Try again.',
 }
 
 function flatten(error: unknown): string {
@@ -47,12 +49,16 @@ export function toRefusal(error: unknown): Refusal {
   for (const code of order) {
     if (raw.includes(code)) return { code, title: COPY[code], raw: firstLine(raw) }
   }
+  if (/transaction expired/i.test(raw)) {
+    return { code: 'TransactionExpired', title: COPY.TransactionExpired, raw: firstLine(raw) }
+  }
   if (/insufficient (funds|balance)|InsufficientBalance/i.test(raw)) {
     return { code: 'InsufficientBalance', title: COPY.InsufficientBalance, raw: firstLine(raw) }
   }
   return { code: 'Unknown', title: 'The network could not complete this payment.', raw: firstLine(raw) }
 }
 
+/** The chain's words without the noisy tail: first three non-empty lines, one line of text. */
 function firstLine(s: string): string {
-  return s.split('\n')[0].slice(0, 400)
+  return s.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 3).join(' ').slice(0, 400)
 }

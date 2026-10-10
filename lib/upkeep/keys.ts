@@ -52,6 +52,11 @@ export async function revokeKey(rootClient: RootClient, key: KeyRef) {
 
 export type KeyState = {
   keyId: Address
+  /**
+   * pending: the sender has not approved this key yet (the chain answers with an empty record, it does not throw).
+   * active: approved and usable. revoked: turned off for good; a revoked key can never be authorized again.
+   */
+  status: 'pending' | 'active' | 'revoked'
   revoked: boolean
   expiry: number
   /** Budget left in this period, straight from the chain. */
@@ -79,10 +84,12 @@ export async function readKeyState(client: PublicClient, accountIn: Address, key
   const payees = scopes
     .filter((s) => s.target.toLowerCase() === TOKEN.toLowerCase())
     .flatMap((s) => s.selectorRules.filter((r) => r.selector.toLowerCase() === TRANSFER_SELECTOR_ID).flatMap((r) => [...r.recipients]))
-  const m = meta as unknown as { isRevoked: boolean; expiry: bigint | number | string }
+  const m = meta as unknown as { address: Address; isRevoked: boolean; expiry: bigint | number | string }
   const l = lim as unknown as { remaining: bigint; periodEnd?: bigint | number }
+  const status: KeyState['status'] = m.isRevoked ? 'revoked' : /^0x0+$/.test(m.address) ? 'pending' : 'active'
   return {
     keyId,
+    status,
     revoked: m.isRevoked,
     expiry: Number(m.expiry),
     remaining: l.remaining,

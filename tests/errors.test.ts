@@ -15,6 +15,10 @@ describe('toRefusal', () => {
     expect(toRefusal(new Error(real.revoked))).toMatchObject({ code: 'KeyAlreadyRevoked' })
     expect(toRefusal(new Error(real.scope)).raw).toContain('CallNotAllowed')
   })
+  it('recognises a timed-out transaction (seen in a real browser run) as retryable, not unknown', () => {
+    const r = toRefusal(new Error('The contract function "transfer" reverted with the following reason: Revm error: transaction expired: current block timestamp 1791662880 >= validBefore 1791662879'))
+    expect(r.code).toBe('TransactionExpired')
+  })
   it('walks nested causes like viem errors', () => {
     const inner = Object.assign(new Error('x'), { details: real.limit })
     const outer = Object.assign(new Error('outer'), { shortMessage: 'ContractFunctionExecutionError', cause: inner })

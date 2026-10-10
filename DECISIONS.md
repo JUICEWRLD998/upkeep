@@ -2,6 +2,16 @@
 
 Build-window decisions and measured evidence, newest first. Network: Tempo Moderato testnet, viem 2.57.4.
 
+## 2026-10-10 (Phase 2, thin path in two browsers)
+
+Exit check: `scripts/e2e-two-browsers.mjs` drives two clean headless Chrome profiles (A = sender with a virtual passkey, B = relative) through the real pages against Moderato. Result after the fixes below: 20/20 steps, three runs in a row, 34-35 s each. Steps: create passkey account, faucet, invite, key made on B's browser, B sees "waiting", A approves with the passkey, B sees $10.00 from the chain and the labelled payee, pays $4 (budget exactly $6.00), chain refuses a stranger (CallNotAllowed) and an over-limit payment (SpendingLimitExceeded), A's feed shows "Mummy paid $4.00", A turns the key off, B is told, B's next attempt is refused (KeyAlreadyRevoked).
+
+- **Unapproved keys do not throw.** Measured with `scripts/probe-states.mjs`: for a key the sender has not approved, `getMetadata` returns the zero address, `spendPolicy: unlimited`, `isRevoked: false`, `getRemainingLimit` returns 0 and `getAllowedCalls` returns `[true, []]`. A revoked key returns `isRevoked: true`, remaining 0 and no calls. `readKeyState` now returns `status: 'pending' | 'active' | 'revoked'`; before this the relative's page would have shown $0.00 instead of "waiting".
+- **Simulating a payment with a revoked key is slow:** about 5 s directly and about 25 s through the relay (`scripts/probe-revoked-relay.mjs`), against about 250 ms for a stranger or over-limit refusal. A relative would stare at a spinner, and the slow path sometimes ended in "transaction expired". Chosen: `pay()` takes an optional precheck that reads the key's on-chain record first and refuses revoked or expired keys at once, with raw text saying it came from the key record. Rejected: waiting for the network's own answer. The stranger and over-limit refusals stay real attempts.
+- **"Transaction expired" is classified `TransactionExpired`**, copy says nothing was paid, and `pay()` retries up to 3 times because an expired transaction never moved money. Seen once as "current block timestamp 1791662880 >= validBefore 1791662879"; local clock skew against the chain measured 0-1 s, so the cause is latency, not skew.
+- **Lint:** the `react-hooks/set-state-in-effect` rule flagged mount-time reads of browser storage. The config-protection hook blocks weakening `eslint.config.mjs`, so the source was changed instead: those loads now run in a `setTimeout(0)` callback.
+- Stale dev server on port 3100 still bit once; fixed with Get-NetTCPConnection and Stop-Process.
+
 ## 2026-10-10 (Phase 0 spikes, real browser)
 
 Driver: `scripts/driver-spike.mjs` (headless Chrome over CDP with a WebAuthn virtual authenticator) loads `/spike` (`app/spike/page.tsx`), which runs the flow with the library in `lib/upkeep`. Dev server on port 3100.
