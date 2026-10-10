@@ -30,7 +30,6 @@ function b64urlDecode(s: string): string {
 }
 
 export function cleanName(raw: string): string {
-  // eslint-disable-next-line no-control-regex
   const name = raw.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 40)
   if (!name) throw new LinkError('A name is required.')
   return name

@@ -36,11 +36,9 @@ function Home() {
   }, [hint])
 
   useEffect(() => {
-    if (!nonce) {
-      setMissing(true)
-      return
-    }
-    loadParentKey(nonce).then((p) => (p ? setParent(p) : setMissing(true)))
+    // Resolve in a callback so the page renders first and never sets state synchronously in the effect body.
+    const run = nonce ? loadParentKey(nonce) : Promise.resolve(null)
+    run.then((p) => (p ? setParent(p) : setMissing(true)))
   }, [nonce])
 
   const refresh = useCallback(async () => {
@@ -57,9 +55,12 @@ function Home() {
 
   useEffect(() => {
     if (!parent) return
-    refresh()
+    const first = setTimeout(refresh, 0)
     const t = setInterval(refresh, 2000)
-    return () => clearInterval(t)
+    return () => {
+      clearTimeout(first)
+      clearInterval(t)
+    }
   }, [parent, refresh])
 
   const labelFor = (a: Address) => payeeLabels.all().find((l) => l.address.toLowerCase() === a.toLowerCase())?.label
