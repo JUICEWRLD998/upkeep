@@ -11,6 +11,7 @@ import { restoreSender, senderClient } from '@/lib/upkeep/sender'
 import { payeeLabels, relatives } from '@/lib/upkeep/store'
 
 type Row = { label: string; address: string }
+type DeskPayee = { id: number; label: string; bank: string; accountName: string; last4: string; address: Address }
 
 export default function Approve() {
   const { token } = useParams<{ token: string }>()
@@ -23,6 +24,56 @@ export default function Approve() {
   const [readyLink, setReadyLink] = useState('')
   const [copied, setCopied] = useState(false)
   const sender = useMemo(() => (typeof window === 'undefined' ? null : restoreSender()), [])
+  const [desk, setDesk] = useState<DeskPayee[]>([])
+  const [deskMsg, setDeskMsg] = useState('')
+  const [form, setForm] = useState({ label: '', bank: '', accountName: '', last4: '' })
+
+  useEffect(() => {
+    if (!sender) return
+    let cancelled = false
+    fetch(`/api/desk/payees?sender=${sender.address}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!cancelled && j?.payees) setDesk(j.payees)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [sender])
+
+  // Put a desk payee into the first empty row, or add a row. The chain's payee list is what the key will be limited to.
+  function pickDeskPayee(p: DeskPayee) {
+    setRows((rs) => {
+      if (rs.some((r) => r.address.toLowerCase() === p.address.toLowerCase())) return rs
+      const label = `${p.label} (${p.bank} ••••${p.last4})`
+      const empty = rs.findIndex((r) => !r.address.trim())
+      return empty >= 0 ? rs.map((r, i) => (i === empty ? { label, address: p.address } : r)) : [...rs, { label, address: p.address }]
+    })
+  }
+
+  async function addDeskPayee() {
+    if (!sender) return
+    setDeskMsg('')
+    try {
+      const res = await fetch('/api/desk/payees', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sender: sender.address, ...form }),
+      })
+      const j = await res.json()
+      if (!res.ok) {
+        setDeskMsg(j.error ?? 'The payout desk said no.')
+        return
+      }
+      setDesk((d) => [...d, j])
+      pickDeskPayee(j)
+      setForm({ label: '', bank: '', accountName: '', last4: '' })
+      setDeskMsg(`${j.label} added at the payout desk.`)
+    } catch {
+      setDeskMsg('Could not reach the payout desk. Try again.')
+    }
+  }
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -149,6 +200,32 @@ export default function Approve() {
         </button>
       </p>
       <p>A test address is a fresh account that nobody holds the key to. It is only for trying the product on the test network.</p>
+
+      <h2>Pay into a Nigerian bank account</h2>
+      <p>
+        The payout desk gives each bank payee its own deposit address on the network. The naira credit is <strong>simulated</strong> in this
+        product; the dollar payment is real on the test network.
+      </p>
+      {desk.length > 0 && (
+        <p>
+          Your desk payees:{' '}
+          {desk.map((p) => (
+            <button key={p.id} type="button" onClick={() => pickDeskPayee(p)}>
+              Use {p.label} ({p.bank} ••••{p.last4})
+            </button>
+          ))}
+        </p>
+      )}
+      <p>
+        <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Name (Mummy)" aria-label="Desk payee name" />{' '}
+        <input value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} placeholder="Bank (GTBank)" aria-label="Desk payee bank" />{' '}
+        <input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} placeholder="Account name" aria-label="Desk payee account name" />{' '}
+        <input value={form.last4} onChange={(e) => setForm({ ...form, last4: e.target.value })} placeholder="Last 4 digits" inputMode="numeric" maxLength={4} aria-label="Desk payee last 4 digits" size={10} />{' '}
+        <button type="button" onClick={addDeskPayee}>
+          Add through the payout desk
+        </button>
+      </p>
+      {deskMsg && <p role="status">{deskMsg}</p>}
 
       {error && <p role="alert">{error}</p>}
       <button disabled={busy} onClick={approve}>
