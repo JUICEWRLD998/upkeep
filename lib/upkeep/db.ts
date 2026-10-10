@@ -65,6 +65,12 @@ export async function listPayees(sender: string): Promise<PayeeRow[]> {
   return rows.map(row)
 }
 
+/** Used by the live tests to clean up the rows they create for a throwaway sender. */
+export async function deletePayeesFor(sender: string): Promise<void> {
+  await ensureSchema()
+  await sql()`delete from payees where sender = ${sender}`
+}
+
 export async function payeesByIds(ids: number[]): Promise<PayeeRow[]> {
   if (ids.length === 0) return []
   await ensureSchema()
