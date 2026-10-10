@@ -38,7 +38,7 @@ export function getRelay() {
   const account = Account.fromSecp256k1(key)
   relay = Relay.create({
     client: createClient({ chain, transport: http(RPC_URL) }),
-    plugins: [Relay.feePayer({ account, validate: (r) => shouldSponsor(r as Request) })],
+    plugins: [Relay.feePayer({ account, feeToken: TOKEN, validate: (r) => { if (process.env.DEBUG_RELAY) console.log('relay validate', JSON.stringify(r, (_, v) => (typeof v === 'bigint' ? v.toString() : v))); const v = shouldSponsor(r as Request); if (process.env.DEBUG_RELAY) console.log('relay verdict', v); return v } })],
   } as never)
   return relay
 }
