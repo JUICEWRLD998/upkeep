@@ -1,6 +1,6 @@
 import { decodeEventLog, getAbiItem, parseAbiItem, type Address, type Hex, type Log } from 'viem'
 import { Abis } from 'viem/tempo'
-import { FEE_MANAGER, KEYCHAIN, TOKEN, type PublicClient } from './chain'
+import { FEE_MANAGER, KEYCHAIN, TOKEN, chunkedLogs, type PublicClient } from './chain'
 
 const spendEvent = getAbiItem({ abi: Abis.accountKeychain, name: 'AccessKeySpend' })
 const transferEvent = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
@@ -77,9 +77,14 @@ export function decodeFeed(logs: readonly RawLog[], account: Address, keyId?: Ad
 
 /** Live: read spend and transfer logs for one sender account from the chain. */
 export async function fetchFeed(client: PublicClient, account: Address, opts: { keyId?: Address; fromBlock: bigint }): Promise<FeedItem[]> {
+  const head = await client.getBlockNumber()
   const [spendLogs, transferLogs] = await Promise.all([
-    client.getLogs({ address: KEYCHAIN, event: spendEvent as never, args: { account } as never, fromBlock: opts.fromBlock, toBlock: 'latest' }),
-    client.getLogs({ address: TOKEN, event: transferEvent, args: { from: account }, fromBlock: opts.fromBlock, toBlock: 'latest' }),
+    chunkedLogs(opts.fromBlock, head, (a, b) =>
+      client.getLogs({ address: KEYCHAIN, event: spendEvent as never, args: { account } as never, fromBlock: a, toBlock: b }),
+    ),
+    chunkedLogs(opts.fromBlock, head, (a, b) =>
+      client.getLogs({ address: TOKEN, event: transferEvent, args: { from: account }, fromBlock: a, toBlock: b }),
+    ),
   ])
   const all = [...spendLogs, ...transferLogs].sort((a, b) =>
     a.blockNumber === b.blockNumber ? (a.logIndex ?? 0) - (b.logIndex ?? 0) : Number((a.blockNumber ?? 0n) - (b.blockNumber ?? 0n)),
