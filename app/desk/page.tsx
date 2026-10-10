@@ -56,6 +56,9 @@ export default function Desk() {
       ) : (
         data && <p>Rate unavailable right now, so no naira amounts are shown.</p>
       )}
+      <p>
+        <small>Shows payments from the last 200,000 network blocks (about 34 hours at the measured 5,900 blocks per hour).</small>
+      </p>
       {error && <p role="alert">{error}</p>}
       {!data && !error && <p>Reading the network...</p>}
       {data && data.rows.length === 0 && <p>No payments to desk payees yet.</p>}
