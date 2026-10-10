@@ -2,6 +2,15 @@
 
 Build-window decisions and measured evidence, newest first. Network: Tempo Moderato testnet, viem 2.57.4.
 
+## 2026-10-10 (Phase 3, payees and the payout desk)
+
+- **Registry in Neon, chain for everything else.** One table, `payees` (id, sender, label, bank, account name, last 4 digits). Balances, limits, payments and payee lists are never stored; they come from the network. Only the last four digits of a bank account are kept, because the naira credit is simulated and a full number would be personal data with no use. Tested against the real database by `tests/live.db.test.ts`, including the 20-payees-per-sender cap.
+- **Deposit addresses are derived, not stored:** `VirtualAddress.from({ masterId, userTag })` with the userTag set to the payee's row id as 6 bytes. A payment to that address forwards to the desk master, and `/api/desk/ledger` finds it from the forwarding transfers.
+- **The RPC rejects log queries over 100,000 blocks** ("query exceeds max block range 100000"). Found by `tests/live.desk.test.ts` the first time it ran. All log reads now go through `chunkedLogs` (90,000-block pieces). The sender feed had the same latent bug for accounts older than 100,000 blocks. Measured block rate: about 5,900 blocks per hour, so the desk's 200,000-block window is about 34 hours; the page says so.
+- **Naira rate:** `open.er-api.com` (free, no key), cached 10 minutes, rejected if outside 100 to 20,000 NGN per USD. If the feed is down the desk shows "rate unavailable" and no naira figures. It never uses a made-up number. The feed updates once a day, so the page prints the update time.
+- **Salt mining is slower than my Phase 1 note implied.** The earlier 60-second find was luck. Measured rate: about 2.7 million salts per second with 4 workers, so one 2^32 range takes about 26 minutes and a range has about a 63% chance of a hit.
+- **Lost the first test master.** The master from the first virtual-address spike (0xFf362180...) was generated inside a throwaway script and its private key was never saved; its registration is real, so it is only useful for read tests. The server master key is now saved in `.env.local` before mining starts.
+
 ## 2026-10-10 (Phase 2, thin path in two browsers)
 
 Exit check: `scripts/e2e-two-browsers.mjs` drives two clean headless Chrome profiles (A = sender with a virtual passkey, B = relative) through the real pages against Moderato. Result after the fixes below: 20/20 steps, three runs in a row, 34-35 s each. Steps: create passkey account, faucet, invite, key made on B's browser, B sees "waiting", A approves with the passkey, B sees $10.00 from the chain and the labelled payee, pays $4 (budget exactly $6.00), chain refuses a stranger (CallNotAllowed) and an over-limit payment (SpendingLimitExceeded), A's feed shows "Mummy paid $4.00", A turns the key off, B is told, B's next attempt is refused (KeyAlreadyRevoked).
