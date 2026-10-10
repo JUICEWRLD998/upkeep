@@ -20,7 +20,7 @@ export default function Send() {
   const [ready, setReady] = useState(false)
   const [balance, setBalance] = useState<bigint | null>(null)
   const [list, setList] = useState<Relative[]>([])
-  const [states, setStates] = useState<Record<string, KeyState | 'pending'>>({})
+  const [states, setStates] = useState<Record<string, KeyState>>({})
   const [feed, setFeed] = useState<FeedItem[]>([])
   const [name, setName] = useState('')
   const [invite, setInvite] = useState('')
@@ -49,14 +49,14 @@ export default function Send() {
     }
     const rel = relatives.all()
     setList(rel)
-    const next: Record<string, KeyState | 'pending'> = {}
+    const next: Record<string, KeyState> = {}
     await Promise.all(
       rel.map(async (r) => {
         if (!r.keyId) return
         try {
           next[r.nonce] = await readKeyState(pub, addr, r.keyId)
         } catch {
-          next[r.nonce] = 'pending'
+          // a network hiccup: this key shows "checking..." until the next poll
         }
       }),
     )
@@ -216,8 +216,10 @@ export default function Send() {
               <strong>{r.name}</strong>:{' '}
               {!r.keyId ? (
                 'invited, waiting for their link'
-              ) : s === 'pending' || !s ? (
+              ) : !s ? (
                 'checking...'
+              ) : s.status === 'pending' ? (
+                'waiting for your approval'
               ) : s.revoked ? (
                 'turned off'
               ) : (

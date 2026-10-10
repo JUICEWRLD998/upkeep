@@ -27,11 +27,15 @@ describe('live: capped, payee-scoped keys on Moderato', () => {
     const sponsor: FeeSponsor = { kind: 'local', plugins: { plugins: [Relay.feePayer({ account: feePayer })] } as never }
     const fromBlock = await pub.getBlockNumber()
 
+    // 0. before approval the chain answers with an empty record instead of throwing
+    expect((await readKeyState(pub, root.address, keyId)).status).toBe('pending')
+
     // 1. authorize: $10 per 40 s, payee = pharmacy only
     await authorizeKey(rootClient, { address: keyId, type: 'p256' }, {
       limit: usd(10), periodSeconds: 40, payees: [pharmacy], expiry: Math.floor(Date.now() / 1000) + 3600,
     })
     let state = await readKeyState(pub, root.address, keyId)
+    expect(state.status).toBe('active')
     expect(state.revoked).toBe(false)
     expect(state.scoped).toBe(true)
     expect(state.remaining).toBe(usd(10))
@@ -64,8 +68,10 @@ describe('live: capped, payee-scoped keys on Moderato', () => {
 
     // 6. revoke ends it
     await revokeKey(rootClient, { address: keyId, type: 'p256' })
-    expect((await readKeyState(pub, root.address, keyId)).revoked).toBe(true)
-    const after = await pay(keyAccount, sponsor, pharmacy, usd(1))
+    const dead = await readKeyState(pub, root.address, keyId)
+    expect(dead.status).toBe('revoked')
+    expect(dead.payees).toEqual([])
+    const after = await pay(keyAccount, sponsor, pharmacy, usd(1), { pub, sender: root.address })
     expect(after).toMatchObject({ ok: false, refusal: { code: 'KeyAlreadyRevoked' } })
   })
 })

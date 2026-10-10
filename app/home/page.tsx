@@ -44,11 +44,11 @@ function Home() {
   const refresh = useCallback(async () => {
     if (!parent) return
     try {
-      setState(await readKeyState(pub, parent.sender, parent.keyId))
-      setWaiting(false)
+      const s = await readKeyState(pub, parent.sender, parent.keyId)
+      setState(s)
+      setWaiting(s.status === 'pending') // the network has no record of the key until the sender approves it
     } catch {
-      setState(null)
-      setWaiting(true) // the key is not on the network until the sender approves it
+      // a network hiccup: keep showing the last known state and try again on the next poll
     }
     setNow(Date.now())
   }, [parent, pub])
@@ -77,7 +77,7 @@ function Home() {
       return
     }
     setBusy(true)
-    const result = await pay(parent.account, { kind: 'relay', url: `${location.origin}/api/relay` }, to, units)
+    const result = await pay(parent.account, { kind: 'relay', url: `${location.origin}/api/relay` }, to, units, { pub, sender: parent.sender })
     setAttempts((a) => [{ at: Date.now(), to, amount: units, result }, ...a])
     setBusy(false)
     refresh()
