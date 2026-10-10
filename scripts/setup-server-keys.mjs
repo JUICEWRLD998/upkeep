@@ -30,7 +30,7 @@ if (!env.DESK_MASTER_SALT) {
   let found
   for (let i = 0n; !found; i++) {
     console.log(`mining range ${i} (start ${i * 2n ** 32n}) ...`)
-    found = await VirtualMaster.mineSaltAsync({ address: master.address, start: i * 2n ** 32n, count: 2 ** 32 })
+    found = await VirtualMaster.mineSaltAsync({ address: master.address, start: i * 2n ** 32n, count: 2 ** 32, workers: 4, onProgress: (p) => { const now = Date.now(); if (now - (globalThis.__last ?? 0) > 60_000) { globalThis.__last = now; console.log(new Date().toISOString().slice(11, 19), 'attempts', p.attempts) } } })
   }
   env.DESK_MASTER_SALT = found.salt
   env.DESK_MASTER_ID = found.masterId
