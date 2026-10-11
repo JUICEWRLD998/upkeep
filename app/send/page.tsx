@@ -238,7 +238,7 @@ export default function Send() {
             </a>
             <div className={styles.balanceLabel}>Balance</div>
             <div className={styles.balance} data-testid="balance">
-              {balance === null ? <span className={styles.muted}>...</span> : <Money units={balance} />}
+              {balance === null ? <span className={styles.muted}>...</span> : <Money units={balance} cents />}
             </div>
             <Button variant="secondary" loading={busy === 'faucet'} onClick={faucet}>
               Add test dollars
@@ -380,5 +380,6 @@ export default function Send() {
     </main>
   )
 }
+
 
 

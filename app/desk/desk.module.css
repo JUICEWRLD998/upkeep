@@ -88,3 +88,9 @@
     flex: none;
   }
 }
+
+.naira {
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+

@@ -1,6 +1,7 @@
 .field {
   display: grid;
   gap: var(--sp-1);
+  align-content: start;
   min-width: 0;
 }
 .label {
@@ -44,3 +45,4 @@
   color: var(--brick);
   font-size: 0.8125rem;
 }
+

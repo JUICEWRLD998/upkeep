@@ -102,6 +102,7 @@ function Home() {
     const result = await pay(parent.account, { kind: 'relay', url: `${location.origin}/api/relay` }, to, units, { pub, sender: parent.sender })
     setAttempts((a) => [{ id: ++counter.current, to, amount: units, result }, ...a])
     setBusy('')
+    if (result.ok) setAmount('')
     refresh()
   }
 
@@ -219,8 +220,10 @@ function Home() {
                       See on the network
                     </a>
                   ) : (
-                    <span>
-                      {a.result.refusal.title} <code>{a.result.refusal.code}</code> <small>{a.result.refusal.raw}</small>
+                    <span className={styles.refusal}>
+                      <span>{a.result.refusal.title}</span>
+                      <code>{a.result.refusal.code}</code>
+                      <small>{a.result.refusal.raw}</small>
                     </span>
                   )}
                 </Slip>
@@ -246,4 +249,6 @@ export default function Page() {
     </Suspense>
   )
 }
+
+
 

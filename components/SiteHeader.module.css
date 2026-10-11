@@ -6,7 +6,7 @@
   align-items: center;
   gap: var(--sp-4);
   padding: var(--sp-3) clamp(var(--sp-4), 4vw, var(--sp-6));
-  background: color-mix(in oklch, var(--ground) 94%, transparent);
+  background: var(--ground);
   border-bottom: 1px solid var(--rule);
   padding-top: max(var(--sp-3), env(safe-area-inset-top));
 }
@@ -34,6 +34,7 @@
   color: var(--ink-2);
   text-decoration: none;
   font-weight: 500;
+  white-space: nowrap;
   transition: background var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
 }
 @media (hover: hover) {
@@ -46,3 +47,15 @@
   color: var(--ink);
   background: var(--s2);
 }
+
+@media (max-width: 480px) {
+  .bar {
+    gap: var(--sp-2);
+    padding-inline: var(--sp-3);
+  }
+  .link {
+    padding: 0 var(--sp-2);
+    font-size: 0.9375rem;
+  }
+}
+

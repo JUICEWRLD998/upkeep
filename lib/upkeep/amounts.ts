@@ -25,3 +25,9 @@ export function formatAmount(units: bigint, decimals: number = USD_DECIMALS): st
   const grouped = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return `${neg ? '-' : ''}${grouped}.${frac}`
 }
+
+/** Whole cents, rounded down, for figures like an account balance where fractions of a cent are noise. */
+export function formatCents(units: bigint, decimals: number = USD_DECIMALS): string {
+  const cent = 10n ** BigInt(decimals - 2)
+  return formatAmount((units / cent) * cent, decimals).replace(/(\.\d\d)\d*$/, '$1')
+}

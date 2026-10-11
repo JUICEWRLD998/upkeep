@@ -58,7 +58,16 @@ export function toRefusal(error: unknown): Refusal {
   return { code: 'Unknown', title: 'The network could not complete this payment.', raw: firstLine(raw) }
 }
 
-/** The chain's words without the noisy tail: first three non-empty lines, one line of text. */
+/**
+ * The chain's own words, without the wrapper noise. A viem error repeats the same reason in several nested messages,
+ * so pick the segment that carries the keychain verdict (or the revert reason) and show just that.
+ */
 function firstLine(s: string): string {
-  return s.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 3).join(' ').slice(0, 400)
+  const parts = s.split(/\s*\|\s*|\n/).map((l) => l.trim()).filter(Boolean)
+  const pick =
+    parts.find((l) => /keychain/i.test(l)) ??
+    parts.find((l) => /revm error|execution reverted|expired|insufficient/i.test(l)) ??
+    parts[0] ??
+    ''
+  return pick.slice(0, 220)
 }

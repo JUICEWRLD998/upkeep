@@ -95,3 +95,18 @@
   padding: 0;
   list-style: none;
 }
+
+.refusal {
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--ink-2);
+}
+.refusal code {
+  color: var(--brick);
+  font-weight: 500;
+}
+.refusal small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+

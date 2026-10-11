@@ -103,7 +103,7 @@ export default function Desk() {
                   ${formatAmount(BigInt(r.amount))}
                 </td>
                 <td data-label="Naira (SIMULATED)" className={`${styles.right} num`}>
-                  {r.nairaKobo ? `Pay ${formatNaira(BigInt(r.nairaKobo))}` : 'rate unavailable'}
+                  {r.nairaKobo ? <>Pay <span className={styles.naira}>{formatNaira(BigInt(r.nairaKobo)).slice(0, 1)}</span>{formatNaira(BigInt(r.nairaKobo)).slice(1)}</> : 'rate unavailable'}
                 </td>
                 <td data-label="Network">
                   <a href={explorerTx(r.txHash)} target="_blank" rel="noreferrer">
@@ -118,3 +118,4 @@ export default function Desk() {
     </main>
   )
 }
+
