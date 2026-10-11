@@ -1,6 +1,4 @@
 import Link from 'next/link'
-import { Envelope } from '@/components/Envelope'
-import { Slip } from '@/components/Slip'
 import styles from './page.module.css'
 
 const steps = [
@@ -36,21 +34,40 @@ export default function Landing() {
           <p className={styles.note}>Runs on the Tempo test network. No real money.</p>
         </div>
 
-        <figure className={styles.art} aria-label="Example of Mummy's envelope and three payments">
-          <div className={styles.envelope}>
-            <Envelope remaining={110_000_000n} limit={150_000_000n} label="Example envelope" />
-            <div className={styles.envelopeText}>
-              <span className={`${styles.figure} num`}>$110.00</span>
-              <span className={styles.muted}>left of $150.00 · Mummy</span>
+        <figure className={styles.art} aria-label="Example of Mummy's key: a $150 monthly limit with one payment made and one refused">
+          <div className={styles.keycard}>
+            <div className={styles.keyHead}>
+              <span className={styles.keyName}>Mummy&apos;s key</span>
+              <span className={styles.keyPeriod}>$150.00 a month</span>
+            </div>
+            <div className={`${styles.figure} num`}>$110.00</div>
+            <div className={styles.meter} role="img" aria-label="73 percent of the monthly limit left">
+              <span className={styles.meterFill} />
+            </div>
+            <div className={styles.keyFoot}>
+              <span>left this month</span>
+              <span>Resets 1 Nov</span>
             </div>
           </div>
-          <ul className={styles.slips}>
-            <Slip tone="paid" who="Mummy paid" to="Corona School" amount="$25.00" stamp="PAID">
-              $110.00 left
-            </Slip>
-            <Slip tone="refused" who="Mummy tried to pay" to="Someone not on the list" amount="$500.00" stamp="REFUSED">
-              <code>CallNotAllowed</code>
-            </Slip>
+          <ul className={styles.ledger}>
+            <li className={styles.row}>
+              <div>
+                <div className={styles.rowTitle}>Corona School</div>
+                <div className={styles.rowSub}>On the list</div>
+              </div>
+              <span className={`${styles.rowAmt} num`}>$25.00</span>
+              <span className={styles.paid}>Paid</span>
+            </li>
+            <li className={styles.row}>
+              <div>
+                <div className={styles.rowTitle}>Someone not on the list</div>
+                <div className={styles.rowSub}>
+                  <code>CallNotAllowed</code>
+                </div>
+              </div>
+              <span className={`${styles.rowAmt} num`}>$500.00</span>
+              <span className={styles.refused}>Refused</span>
+            </li>
           </ul>
           <figcaption className={styles.caption}>Example. Every figure in the app is read from the network as you look at it.</figcaption>
         </figure>
