@@ -111,3 +111,15 @@
 }
 
 
+
+/* reserve the space the rate line and the table will fill, so data arriving does not shift the page */
+.rateLine {
+  min-height: 3.2em;
+}
+.skeleton {
+  min-height: 260px;
+  padding: var(--sp-4);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-card);
+}
+

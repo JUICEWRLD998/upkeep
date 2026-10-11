@@ -51,6 +51,7 @@ export default function Desk() {
           Every row is a real dollar payment on the test network, read from the chain just now. The naira column is a payout instruction and is{' '}
           <strong>simulated</strong>: no naira has moved and no bank has been called.
         </p>
+        <div className={styles.rateLine}>
         {data?.rate ? (
           <p className={styles.muted}>
             Rate used: ₦{data.rate.ngnPerUsd.toLocaleString('en-NG', { maximumFractionDigits: 2 })} per $1 ({data.rate.source}, updated {data.rate.asOf}).
@@ -58,6 +59,7 @@ export default function Desk() {
         ) : (
           data && <p className={styles.muted}>Rate unavailable right now, so no naira amounts are shown.</p>
         )}
+        </div>
         <p className={styles.muted}>
           <small>Shows payments from the last 200,000 network blocks (about 34 hours at the measured 5,900 blocks per hour).</small>
         </p>
@@ -68,7 +70,11 @@ export default function Desk() {
           {error}
         </p>
       )}
-      {!data && !error && <p className={styles.muted}>Reading the network...</p>}
+      {!data && !error && (
+        <div className={styles.skeleton} aria-busy="true">
+          <p className={styles.muted}>Reading the network...</p>
+        </div>
+      )}
       {data && data.rows.length === 0 && <p className={styles.muted}>No payments to desk payees yet.</p>}
       {data && data.rows.length > 0 && (
         <table className={styles.table}>
@@ -118,4 +124,5 @@ export default function Desk() {
     </main>
   )
 }
+
 
