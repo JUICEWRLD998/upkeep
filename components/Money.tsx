@@ -15,7 +15,7 @@ export function Money({ units, className, cents = false }: { units: bigint; clas
   const [text, setText] = useState(() => fmt(units))
   const first = useRef(true)
 
-  useMotionValueEvent(mv, 'change', (v) => setText(fmt(BigInt(Math.round(v)))))
+  useMotionValueEvent(mv, 'change', (v) => setText(formatCents(BigInt(Math.round(v)))))
 
   useEffect(() => {
     if (first.current || reduce) {
@@ -25,6 +25,8 @@ export function Money({ units, className, cents = false }: { units: bigint; clas
       return
     }
     const controls = animate(mv, Number(units), { duration: dur.level, ease: ease.out })
+    // while counting, show whole cents so the figure does not flicker through six decimals; settle on the exact amount
+    controls.then(() => setText(fmt(units)))
     return () => controls.stop()
   }, [units, reduce, mv, fmt])
 
@@ -35,4 +37,5 @@ export function Money({ units, className, cents = false }: { units: bigint; clas
     </span>
   )
 }
+
 

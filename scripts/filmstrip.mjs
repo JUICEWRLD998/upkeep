@@ -57,7 +57,9 @@ try {
   const txt1 = await A.text()
   check('end state is text: $80.00 left and a PAID slip', txt1.includes('$80.00') && txt1.includes('PAID') && txt1.includes('$20.00'))
 
-  const win = frames.filter((f) => f.t >= arrive - 0.3 && f.t <= arrive + 1.5)
+  const all = frames.filter((f) => f.t >= arrive - 0.15 && f.t <= arrive + 1.4)
+  const step = Math.max(1, Math.ceil(all.length / 24))
+  const win = all.filter((_, i) => i % step === 0)
   win.forEach((f, i) => writeFileSync(`${OUT}/frame-${String(i + 1).padStart(3, '0')}.jpg`, Buffer.from(f.data, 'base64')))
   check('enough frames to read the beats', win.length >= 8, `${win.length} frames between -0.3 s and +1.5 s of arrival (${frames.length} total)`)
   if (win.length >= 4) {
@@ -89,3 +91,4 @@ try {
   console.log(`${results.filter((r) => r.ok).length}/${results.length} checks passed`)
 }
 process.exit(0)
+

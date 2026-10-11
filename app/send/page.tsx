@@ -62,39 +62,48 @@ export default function Send() {
     }
     const rel = relatives.all()
     setList(rel)
+    // Start the feed read first so the key states and the feed land in the SAME render. The signature moment needs the
+    // envelope level and the figure to start moving at the instant the slip drops, not half a second before it.
+    const from = since.get()
+    const feedRead = from ? fetchFeed(pub, addr, { fromBlock: BigInt(from) }).catch(() => null) : Promise.resolve(null)
     const next: Record<string, KeyState> = {}
     await Promise.all(
       rel.map(async (r) => {
         if (!r.keyId) return
         try {
-          const st = await readKeyState(pub, addr, r.keyId)
-          next[r.nonce] = st
-          setPeaks((p) => (st.remaining > (p[r.nonce] ?? 0n) ? { ...p, [r.nonce]: st.remaining } : p))
+          next[r.nonce] = await readKeyState(pub, addr, r.keyId)
         } catch {
           // a network hiccup: this key shows "checking..." until the next poll
         }
       }),
     )
-    setStates(next)
-    const from = since.get()
-    if (from) {
-      try {
-        const items = (await fetchFeed(pub, addr, { fromBlock: BigInt(from) })).reverse()
-        // The first load only marks what is already there as seen. Anything that arrives later plays the signature moment.
-        if (seen.current === null) {
-          seen.current = new Set(items.map((i) => i.txHash))
-        } else {
-          const arrived = items.filter((i) => !seen.current!.has(i.txHash)).map((i) => i.txHash)
-          if (arrived.length) {
-            arrived.forEach((h) => seen.current!.add(h))
-            setFresh((f) => new Set([...f, ...arrived]))
-          }
+    const found = await feedRead
+    const items = found ? [...found].reverse() : null
+    if (items) {
+      // The first load only marks what is already there as seen. Anything that arrives later plays the signature moment.
+      if (seen.current === null) {
+        seen.current = new Set(items.map((i) => i.txHash))
+      } else {
+        const arrived = items.filter((i) => !seen.current!.has(i.txHash)).map((i) => i.txHash)
+        if (arrived.length) {
+          arrived.forEach((h) => seen.current!.add(h))
+          setFresh((f) => new Set([...f, ...arrived]))
         }
-        setFeed(items)
-      } catch {
-        // transient RPC error; the next poll retries
       }
     }
+    setPeaks((p) => {
+      let changed = false
+      const out = { ...p }
+      for (const [nonce, st] of Object.entries(next)) {
+        if (st.remaining > (out[nonce] ?? 0n)) {
+          out[nonce] = st.remaining
+          changed = true
+        }
+      }
+      return changed ? out : p
+    })
+    setStates(next)
+    if (items) setFeed(items)
     setNow(Date.now())
   }, [sender, pub])
 
@@ -381,6 +390,7 @@ export default function Send() {
     </main>
   )
 }
+
 
 
 
