@@ -1,9 +1,13 @@
-/* Hallmark · route: custom (bespoke) · structure: product console + phone app, object metaphor (envelope, slips, stamps)
- * idea: "the slip lands": a payment drops in as a stamped teller slip while the envelope level falls
- * paper: oklch(0.17 0.020 250) dark / oklch(0.965 0.012 85) light · accent: oklch(0.80 0.14 168) dark / oklch(0.50 0.11 168) light
- * display: Bricolage Grotesque · body: Geist · mono: Geist Mono · axes: dark+light / geometric-sans / chromatic-green ~168
- * gates: see strategy/design/DESIGN.md · studied: no */
+/*! Hallmark · macrostructure: bespoke console + phone app · hero: object metaphor (envelope level, teller slips, rubber stamp)
+ * theme: custom · vibe: "cash envelope, teller slip, stamped, flat deep blue-black" · paper: oklch(0.17 0.020 250) dark, oklch(0.965 0.012 85) light · accent: oklch(0.80 0.14 168) dark, oklch(0.50 0.11 168) light
+ * display: Bricolage Grotesque · body: Geist · axes: dark+light / geometric-sans / chromatic-green ~168
+ * studied: no · context: explicit · v0.8.0 */
 @import '../styles/tokens.css';
+
+/* The stamp above is stripped by the CSS minifier, so the same record is kept as a custom property that survives it. */
+:root {
+  --hallmark-stamp: 'macrostructure: bespoke console + phone app · theme: custom · vibe: cash envelope, teller slip, stamped · axes: dark+light / geometric-sans / chromatic-green ~168';
+}
 
 *,
 *::before,
@@ -108,4 +112,6 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+
 

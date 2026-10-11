@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
+import { execFileSync, spawn } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -57,10 +57,19 @@ export async function launch(port, passkey) {
     errors,
     on: (method, cb) => listeners.set(method, cb),
     send,
-    close: () => { try { ws.close() } catch {} proc.kill() },
+    // Kill the whole Chrome tree, then delete the throwaway profile. Each profile is 50 to 70 MB; left behind they filled
+    // the disk (ENOSPC mid-run, 2026-10-11, 4.5 GB across 87 folders).
+    close: () => {
+      try { ws.close() } catch {}
+      try { execFileSync('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' }) } catch { proc.kill() }
+      for (let i = 0; i < 30; i++) {
+        try { rmSync(dir, { recursive: true, force: true }); break } catch { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100) }
+      }
+    },
   }
   return api
 }
+
 
 
 

@@ -51,4 +51,8 @@
 }
 .note a {
   color: var(--sky);
+  /* a 24px-tall hit area for the link inside small text (WCAG 2.2 target size) */
+  display: inline-block;
+  padding-block: 4px;
 }
+
