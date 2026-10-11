@@ -79,10 +79,11 @@ check('the table still exists and holds the SQL-looking text as plain text (para
 const badGet = await fetch(`${BASE}/api/desk/payees?sender=nope`, { headers: { 'x-forwarded-for': ip() } })
 check('listing with a bad sender is a 400', badGet.status === 400, String(badGet.status))
 const big = await post('/api/desk/payees', JSON.stringify({ sender, label: 'x'.repeat(3_000_000), bank: 'b', accountName: 'c', last4: '1234' }), {}, true)
-check('a 3 MB body does not give a 5xx', big.status < 500, String(big.status))
+check('a 3 MB body is refused with 413 before it is parsed', big.status === 413, String(big.status))
 const ledger = await fetch(`${BASE}/api/desk/ledger`, { headers: { 'x-forwarded-for': ip() } })
 check('control: the public ledger answers', ledger.status === 200, String(ledger.status))
 
 console.log(`${results.filter(Boolean).length}/${results.length} checks passed`)
 process.exit(results.every(Boolean) ? 0 : 1)
+
 
