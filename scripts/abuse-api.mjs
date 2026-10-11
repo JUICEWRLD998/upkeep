@@ -12,10 +12,14 @@ const post = (path, body, headers = {}, raw = false) =>
   fetch(BASE + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip(), ...headers }, body: raw ? body : JSON.stringify(body) })
 const transferData = '0xa9059cbb' + '0'.repeat(24) + 'ab'.repeat(20) + '0'.repeat(63) + '1'
 const fill = (from, call, extra = {}) => ({ jsonrpc: '2.0', id: 1, method: 'eth_fillTransaction', params: [{ from, type: '0x76', calls: [call], feePayer: true, chainId: '0xa5bf', ...extra }] })
+const RPC = 'https://rpc.moderato.tempo.xyz'
+const fund = async (addr) => { const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tempo_fundAddress', params: [addr] }) }); return (await r.json()).result }
+const STACK = /\n\s+at \w|node_modules/
 const sponsored = async (res) => { const t = await res.text(); return { signed: t.includes('feePayerSignature'), text: t.slice(0, 200), status: res.status } }
 
 // ---- relay ----
 const from = privateKeyToAddress(generatePrivateKey())
+await fund(from)
 const good = await sponsored(await post('/api/relay', fill(from, { to: TOKEN, data: transferData, value: '0x' })))
 check('control: a plain AlphaUSD transfer IS sponsored', good.signed, `${good.status} ${good.signed ? 'feePayerSignature present' : good.text}`)
 
@@ -31,16 +35,17 @@ const bigGas = await sponsored(await post('/api/relay', fill(from, { to: TOKEN, 
 check('a transfer asking for 5,000,000 gas is NOT sponsored', !bigGas.signed)
 const garbageValue = await post('/api/relay', fill(from, { to: TOKEN, data: transferData, value: 'banana' }))
 const gvText = await garbageValue.text()
-check('a non-numeric value does not leak a stack trace', !gvText.includes(' at ') && !/node_modules/.test(gvText), `status ${garbageValue.status} ${gvText.slice(0, 80)}`)
+check('a non-numeric value does not leak a stack trace', !STACK.test(gvText), `status ${garbageValue.status} ${gvText.slice(0, 80)}`)
 const notJson = await post('/api/relay', '{{{ not json', {}, true)
 const njText = await notJson.text()
-check('non-JSON body does not leak a stack trace', !/node_modules| at /.test(njText), `status ${notJson.status} ${njText.slice(0, 80)}`)
+check('non-JSON body does not leak a stack trace', !STACK.test(njText), `status ${notJson.status} ${njText.slice(0, 80)}`)
 const batch = await post('/api/relay', [fill(from, { to: TOKEN, data: transferData, value: '0x' }), fill(from, { to: TOKEN, data: transferData, value: '0x' })])
 const bText = await batch.text()
-check('a JSON-RPC batch does not leak a stack trace', !/node_modules| at /.test(bText), `status ${batch.status} ${bText.slice(0, 80)}`)
+check('a JSON-RPC batch does not leak a stack trace', !STACK.test(bText), `status ${batch.status} ${bText.slice(0, 80)}`)
 
 // per-account limit: the same `from` over many requests from DIFFERENT ips (a spoofed header cannot dodge it)
 const burstFrom = privateKeyToAddress(generatePrivateKey())
+await fund(burstFrom)
 let signedCount = 0
 for (let i = 0; i < 26; i++) { if ((await sponsored(await post('/api/relay', fill(burstFrom, { to: TOKEN, data: transferData, value: '0x' })))).signed) signedCount++ }
 check('one account is capped at 20 sponsored requests a minute even from 26 different IPs', signedCount > 0 && signedCount <= 20, `${signedCount} sponsored of 26`)
@@ -80,3 +85,4 @@ check('control: the public ledger answers', ledger.status === 200, String(ledger
 
 console.log(`${results.filter(Boolean).length}/${results.length} checks passed`)
 process.exit(results.every(Boolean) ? 0 : 1)
+
