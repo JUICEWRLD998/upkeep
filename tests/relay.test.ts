@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { overLimit, shouldSponsor, sponsorDecision } from '../lib/upkeep/relay'
+import { LOW_SPONSOR_BALANCE, needsTopUp, overLimit, shouldSponsor, sponsorDecision } from '../lib/upkeep/relay'
 
 const TOKEN = '0x20c0000000000000000000000000000000000001'
 const transfer = '0xa9059cbb' + '0'.repeat(128)
@@ -57,5 +57,15 @@ describe('sponsorDecision', () => {
     const bad = { from: '0xdddd', calls: [{ to: '0x20c0000000000000000000000000000000000000', data: transfer }] }
     for (let i = 0; i < 10; i++) expect(sponsorDecision(bad, t + i, { perAccount: 2, global: 2 })).toBe(false)
     expect(sponsorDecision({ from: '0xdddd', calls: [{ to: TOKEN, data: transfer }] }, t + 20, { perAccount: 2, global: 2 })).toBe(true)
+  })
+})
+
+describe('needsTopUp', () => {
+  it('asks the faucet only when the balance is low, and not more than once every ten minutes', () => {
+    const t = 1_000_000_000
+    expect(needsTopUp(LOW_SPONSOR_BALANCE - 1n, t, 0)).toBe(true)
+    expect(needsTopUp(LOW_SPONSOR_BALANCE, t, 0)).toBe(false)
+    expect(needsTopUp(0n, t, t - 60_000)).toBe(false)
+    expect(needsTopUp(0n, t, t - 11 * 60_000)).toBe(true)
   })
 })

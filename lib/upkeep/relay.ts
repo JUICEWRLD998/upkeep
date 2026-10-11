@@ -1,6 +1,6 @@
 import { createClient, http, type Hex } from 'viem'
-import { Account, Relay } from 'viem/tempo'
-import { chain, RPC_URL, TOKEN } from './chain'
+import { Account, Actions, Relay } from 'viem/tempo'
+import { chain, publicClient, RPC_URL, TOKEN } from './chain'
 
 const TRANSFER_SELECTOR = '0xa9059cbb'
 /** transfer(address,uint256): 4-byte selector + two 32-byte words, as a 0x string. Anything longer is padding the sponsor would pay gas for. */
@@ -86,4 +86,34 @@ export function getRelay() {
     plugins: [Relay.feePayer({ account, feeToken: TOKEN, validate: (r) => sponsorDecision(r as Request) })],
   } as never)
   return relay
+}
+
+/** Below this the sponsor tops itself up. A sponsored transfer costs a fraction of a cent, so this is a long way off. */
+export const LOW_SPONSOR_BALANCE = 10_000_000n
+const TOP_UP_EVERY_MS = 10 * 60 * 1000
+let lastTopUp = 0
+
+/** Pure: should the sponsor ask the faucet for more? Testnet only; on mainnet this would page a human instead. */
+export function needsTopUp(balance: bigint, now: number, last: number): boolean {
+  return balance < LOW_SPONSOR_BALANCE && now - last >= TOP_UP_EVERY_MS
+}
+
+/**
+ * The demo's fee payer lives on testnet dollars. If it ever runs low, every sponsored payment would fail with a
+ * confusing "not enough dollars" message, so it refills itself from the public faucet (at most once every ten minutes).
+ * Failure here is silent on purpose: the relay then simply behaves as it did before.
+ */
+export async function ensureSponsorFunded(now = Date.now()): Promise<void> {
+  try {
+    const key = process.env.FEE_PAYER_PRIVATE_KEY as Hex | undefined
+    if (!key) return
+    const account = Account.fromSecp256k1(key)
+    const pub = publicClient()
+    const b = (await Actions.token.getBalance(pub as never, { account: account.address, token: TOKEN })) as unknown as { amount: bigint }
+    if (!needsTopUp(b.amount, now, lastTopUp)) return
+    lastTopUp = now
+    await Actions.faucet.fund(pub as never, { account: account.address })
+  } catch {
+    // keep going; a missed top-up must never block a payment
+  }
 }

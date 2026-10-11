@@ -1,4 +1,4 @@
-import { getRelay, overLimit } from '@/lib/upkeep/relay'
+import { ensureSponsorFunded, getRelay, overLimit } from '@/lib/upkeep/relay'
 
 export const runtime = 'nodejs'
 
@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   const declared = Number(request.headers.get('content-length') ?? '0')
   if (declared > 64_000) return Response.json({ error: 'That request is too large.' }, { status: 413 })
   try {
+    void ensureSponsorFunded()
     const debug = !!process.env.DEBUG_RELAY
     const body = debug ? await request.clone().text() : ''
     const res = await getRelay().fetch(request)
@@ -21,4 +22,5 @@ export async function POST(request: Request) {
     return Response.json({ error: e instanceof Error ? e.message : 'relay error' }, { status: 500 })
   }
 }
+
 
