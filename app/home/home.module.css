@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: var(--sp-5) var(--sp-4) calc(var(--sp-8) + env(safe-area-inset-bottom));
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
 }
 @media (min-width: 900px) {
@@ -59,7 +60,6 @@
   letter-spacing: 0;
 }
 .remaining {
-  font-size: clamp(2.75rem, 12vw, 4rem);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -109,4 +109,8 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+
+
+.head h1, .center h1 { overflow-wrap: anywhere; }
 

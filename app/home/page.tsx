@@ -152,7 +152,7 @@ function Home() {
         <div className={styles.heroText}>
           <h2 className={styles.kicker}>Your upkeep left</h2>
           <div className={styles.remaining} data-testid="remaining">
-            <Money units={state.remaining} />
+            <Money units={state.remaining} fit="4rem" />
           </div>
           <p className={styles.muted}>
             {state.periodEnd ? `Refills ${untilText(state.periodEnd, now)}` : 'One-time budget, does not refill'}
@@ -249,6 +249,7 @@ export default function Page() {
     </Suspense>
   )
 }
+
 
 
 

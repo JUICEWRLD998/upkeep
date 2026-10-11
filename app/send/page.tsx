@@ -247,7 +247,7 @@ export default function Send() {
             </a>
             <div className={styles.balanceLabel}>Balance</div>
             <div className={styles.balance} data-testid="balance">
-              {balance === null ? <span className={styles.muted}>...</span> : <Money units={balance} cents />}
+              {balance === null ? <span className={styles.muted}>...</span> : <Money units={balance} cents fit="2rem" />}
             </div>
             <Button variant="secondary" loading={busy === 'faucet'} onClick={faucet}>
               Add test dollars
@@ -330,7 +330,7 @@ export default function Send() {
                           <>
                             <Envelope remaining={s.remaining} limit={limitFor(r, s)} tone="compact" label={`${r.name}'s envelope`} />
                             <div className={styles.left}>
-                              <Money units={s.remaining} className={styles.leftNum} />
+                              <Money units={s.remaining} className={styles.leftNum} fit="2.25rem" />
                               <span className={styles.muted}>
                                 left{r.limit ? ` of $${formatAmount(BigInt(r.limit))}` : ''}
                               </span>
@@ -390,6 +390,7 @@ export default function Send() {
     </main>
   )
 }
+
 
 
 

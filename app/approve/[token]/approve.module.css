@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: var(--sp-5) clamp(var(--sp-4), 4vw, var(--sp-6)) var(--sp-8);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
 }
 .head {
@@ -114,7 +115,6 @@
   justify-items: start;
 }
 .previewNum {
-  font-size: 2.25rem;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -150,3 +150,8 @@
   align-items: center;
   min-height: var(--target);
 }
+
+
+
+.head h1, .page > h1, .keyHead h3, .doneText h1 { overflow-wrap: anywhere; }
+

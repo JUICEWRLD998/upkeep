@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: var(--sp-5) clamp(var(--sp-4), 4vw, var(--sp-6)) var(--sp-8);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
 }
 .head {
@@ -108,4 +109,5 @@
     text-align: left !important;
   }
 }
+
 

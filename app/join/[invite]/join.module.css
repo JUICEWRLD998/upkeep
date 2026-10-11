@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: var(--sp-5) var(--sp-4) calc(var(--sp-8) + env(safe-area-inset-bottom));
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
 }
 .muted {
@@ -52,3 +53,7 @@
   align-items: center;
   min-height: var(--target);
 }
+
+
+.head h1, .page > h1, .keyHead h3, .doneText h1 { overflow-wrap: anywhere; }
+

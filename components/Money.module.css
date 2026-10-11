@@ -1,0 +1,12 @@
+.fit {
+  display: block;
+  width: 100%;
+  container-type: inline-size;
+}
+.fitInner {
+  display: block;
+  white-space: nowrap;
+  line-height: 1.05;
+  /* a mono digit is about 0.62em wide: the largest size at which --chars digits still fit the box */
+  font-size: min(var(--max), calc(100cqw / (var(--chars) * 0.62)));
+}

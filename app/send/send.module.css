@@ -83,7 +83,6 @@
   margin-bottom: calc(var(--sp-2) * -1);
 }
 .balance {
-  font-size: 2rem;
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -198,7 +197,6 @@
   flex-wrap: wrap;
 }
 .leftNum {
-  font-size: 2.25rem;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -219,4 +217,8 @@
   padding: 0;
   list-style: none;
 }
+
+
+
+.head h1, .page > h1, .keyHead h3, .doneText h1 { overflow-wrap: anywhere; }
 

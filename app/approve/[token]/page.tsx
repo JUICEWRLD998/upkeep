@@ -298,7 +298,7 @@ export default function Approve() {
         <aside className={styles.preview} aria-label="Preview of the envelope">
           <Envelope remaining={previewUnits} limit={previewUnits} tone="compact" label={`${ret.name}'s envelope`} />
           <div className={styles.previewNum}>
-            <Money units={previewUnits} />
+            <Money units={previewUnits} fit="2.25rem" />
           </div>
           <p className={styles.muted}>
             {ret.name} will be able to spend this much {PERIODS[period].label.toLowerCase()}, at {rows.filter((r) => r.address.trim()).length || 'no'} payee
@@ -309,4 +309,5 @@ export default function Approve() {
     </main>
   )
 }
+
 
