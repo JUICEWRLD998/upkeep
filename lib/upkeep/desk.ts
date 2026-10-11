@@ -1,6 +1,6 @@
 import { decodeEventLog, parseAbiItem, type Address, type Hex, type Log } from 'viem'
 import { VirtualAddress } from 'viem/tempo'
-import { TOKEN, type PublicClient } from './chain'
+import { TOKEN, chunkedLogs, type PublicClient } from './chain'
 
 /**
  * The payout desk gives each payee (pharmacy, school, Mummy's bank account) its own deposit address derived from one
@@ -53,7 +53,10 @@ export function decodeDeskPayments(logs: readonly RawLog[], masterId: Hex): Desk
 
 /** Live: payments the desk received, found through the forwarding transfers into the master account. */
 export async function fetchDeskPayments(client: PublicClient, master: Address, masterId: Hex, fromBlock: bigint): Promise<DeskPayment[]> {
-  const forwards = await client.getLogs({ address: TOKEN, event: transferEvent, args: { to: master }, fromBlock, toBlock: 'latest' })
+  const head = await client.getBlockNumber()
+  const forwards = await chunkedLogs(fromBlock, head, (a, b) =>
+    client.getLogs({ address: TOKEN, event: transferEvent, args: { to: master }, fromBlock: a, toBlock: b }),
+  )
   const hashes = [...new Set(forwards.map((l) => l.transactionHash).filter((h): h is Hex => !!h))]
   const receipts = await Promise.all(hashes.map((h) => client.getTransactionReceipt({ hash: h })))
   return receipts.flatMap((r) => decodeDeskPayments(r.logs as RawLog[], masterId))

@@ -7,6 +7,6 @@ limit and a list of payees. The parent pays when she needs to; the chain refuses
 
 Built for the Colosseum Crypto World's Fair, Tempo track. Runs on the Tempo Moderato testnet.
 
-Status: LIVE = core library, fee-paying relay, and live chain tests (Phases 0-1). NOT LIVE = UI, payout desk screens. See DECISIONS.md and CLAIMS.md.
+Status: LIVE = core library, fee-paying relay, plain two-browser flow (invite, key, approval, payments, refusals, revoke), payout-desk payees and the desk ledger. SIMULATED = the naira credit to a Nigerian bank. NOT LIVE = the designed UI (Phase 4). See DECISIONS.md and CLAIMS.md.
 
 Mustapha Fadhlullah, independent security researcher.
