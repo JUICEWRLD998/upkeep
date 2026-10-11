@@ -6,6 +6,7 @@ import type { Address } from 'viem'
 import { Button } from '@/components/Button'
 import { CopyField } from '@/components/CopyField'
 import { Envelope } from '@/components/Envelope'
+import { Mark } from '@/components/Mark'
 import { Field, Input } from '@/components/Field'
 import { Money } from '@/components/Money'
 import { Slip } from '@/components/Slip'
@@ -215,7 +216,7 @@ export default function Send() {
       <main className={styles.page}>
         <section className={styles.welcome}>
           <div className={styles.welcomeArt} aria-hidden="true">
-            <Envelope remaining={0n} limit={150_000_000n} label="Empty envelope" />
+            <Mark size={72} />
           </div>
           <div className={styles.welcomeText}>
             <h1>Keep your dollars. Give your family a key.</h1>
@@ -284,7 +285,7 @@ export default function Send() {
         <div className={styles.stage}>
           <header className={styles.head}>
             <h1>Your upkeep</h1>
-            <p className={styles.muted}>Each envelope is what that person can still spend this period. The network enforces it.</p>
+            <p className={styles.muted}>Each budget is what that person can still spend this period. The network enforces it.</p>
           </header>
           {msg && (
             <p role={msgTone === 'error' ? 'alert' : 'status'} className={msgTone === 'error' ? styles.error : styles.ok}>
@@ -297,11 +298,11 @@ export default function Send() {
             {list.length === 0 ? (
               <div className={styles.empty}>
                 <div className={styles.emptyArt} aria-hidden="true">
-                  <Envelope remaining={0n} limit={150_000_000n} tone="compact" label="Empty envelope" />
+                  <Mark size={44} />
                 </div>
                 <div>
                   <h2>No keys yet</h2>
-                  <p className={styles.muted}>Make an invite link for Mummy and her envelope appears here the moment you approve her key.</p>
+                  <p className={styles.muted}>Make an invite link for Mummy and her budget appears here the moment you approve her key.</p>
                 </div>
               </div>
             ) : (
@@ -328,7 +329,7 @@ export default function Send() {
                         </div>
                         {live ? (
                           <>
-                            <Envelope remaining={s.remaining} limit={limitFor(r, s)} tone="compact" label={`${r.name}'s envelope`} />
+                            <Envelope remaining={s.remaining} limit={limitFor(r, s)} tone="compact" label={`${r.name}'s budget`} />
                             <div className={styles.left}>
                               <Money units={s.remaining} className={styles.leftNum} fit="2.25rem" />
                               <span className={styles.muted}>

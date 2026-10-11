@@ -7,3 +7,5 @@ next-env.d.ts
 .vercel
 AGENTS.md
 .env.*.local
+
+demo/build/

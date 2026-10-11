@@ -57,3 +57,8 @@
 
 .head h1, .page > h1, .keyHead h3, .doneText h1 { overflow-wrap: anywhere; }
 
+
+.art {
+  display: grid;
+  place-items: center;
+}

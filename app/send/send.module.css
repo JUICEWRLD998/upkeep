@@ -222,3 +222,10 @@
 
 .head h1, .page > h1, .keyHead h3, .doneText h1 { overflow-wrap: anywhere; }
 
+
+/* the key glyph sits centred in its tile */
+.welcomeArt,
+.emptyArt {
+  display: grid;
+  place-items: center;
+}

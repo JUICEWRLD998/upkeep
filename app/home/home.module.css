@@ -114,3 +114,8 @@
 
 .head h1, .center h1 { overflow-wrap: anywhere; }
 
+
+.center .art {
+  display: grid;
+  place-items: center;
+}

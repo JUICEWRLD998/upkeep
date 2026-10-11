@@ -173,7 +173,7 @@ export default function Approve() {
       <main className={styles.page}>
         <section className={styles.done}>
           <div className={styles.doneArt} aria-hidden="true">
-            <Envelope remaining={previewUnits} limit={previewUnits} label={`${ret.name}'s envelope`} />
+            <Envelope remaining={previewUnits} limit={previewUnits} label={`${ret.name}'s budget`} />
           </div>
           <div className={styles.doneText}>
             <h1>{ret.name}&apos;s key is active</h1>
@@ -299,8 +299,8 @@ export default function Approve() {
           </div>
         </div>
 
-        <aside className={styles.preview} aria-label="Preview of the envelope">
-          <Envelope remaining={previewUnits} limit={previewUnits} tone="compact" label={`${ret.name}'s envelope`} />
+        <aside className={styles.preview} aria-label="Preview of the budget">
+          <Envelope remaining={previewUnits} limit={previewUnits} tone="compact" label={`${ret.name}'s budget`} />
           <div className={styles.previewNum}>
             <Money units={previewUnits} fit="2.25rem" />
           </div>

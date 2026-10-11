@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { getAddress, isAddress, type Address } from 'viem'
 import { Button } from '@/components/Button'
 import { Envelope } from '@/components/Envelope'
+import { Mark } from '@/components/Mark'
 import { Field, Input, Select } from '@/components/Field'
 import { Money } from '@/components/Money'
 import { Slip } from '@/components/Slip'
@@ -134,7 +135,7 @@ function Home() {
       <main className={styles.page}>
         <div className={styles.center}>
           <div className={styles.art} aria-hidden="true">
-            <Envelope remaining={0n} limit={1n} label="Empty envelope" />
+            <Mark size={56} />
           </div>
           <h1>Hello {parent.name}</h1>
           <p>Waiting for the sender to approve your key. Keep this page open.</p>
@@ -155,7 +156,7 @@ function Home() {
 
       <section className={styles.hero} aria-label="Your upkeep">
         <div className={styles.art}>
-          <Envelope remaining={state.remaining} limit={level} label="Your envelope" />
+          <Envelope remaining={state.remaining} limit={level} label="Your budget" />
         </div>
         <div className={styles.heroText}>
           <h2 className={styles.kicker}>Your upkeep left</h2>

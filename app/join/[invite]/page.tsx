@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/Button'
 import { CopyField } from '@/components/CopyField'
-import { Envelope } from '@/components/Envelope'
+import { Mark } from '@/components/Mark'
 import { LinkError, decodeInvite, encodeKeyReturn, type Invite } from '@/lib/upkeep/links'
 import { createParentKey, loadParentKey } from '@/lib/upkeep/parentKey'
 import styles from './join.module.css'
@@ -54,7 +54,7 @@ export default function Join() {
   return (
     <main className={styles.page}>
       <div className={styles.art} aria-hidden="true">
-        <Envelope remaining={0n} limit={1n} label="Empty envelope" />
+        <Mark size={56} />
       </div>
       <header className={styles.head}>
         <h1>Hello {invite.name}</h1>
