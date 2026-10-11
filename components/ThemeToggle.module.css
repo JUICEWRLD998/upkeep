@@ -1,0 +1,21 @@
+.toggle {
+  display: inline-grid;
+  place-items: center;
+  width: var(--target);
+  height: var(--target);
+  border-radius: var(--r-inner);
+  border: 1px solid var(--rule);
+  background: var(--s1);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+@media (hover: hover) {
+  .toggle:hover {
+    background: var(--s2);
+    color: var(--ink);
+  }
+}
+.toggle:active {
+  transform: scale(0.96);
+}

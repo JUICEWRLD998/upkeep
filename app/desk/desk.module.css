@@ -1,0 +1,125 @@
+.page {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--sp-5) clamp(var(--sp-4), 4vw, var(--sp-6)) var(--sp-8);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+.head {
+  display: grid;
+  gap: var(--sp-3);
+}
+.head h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+.muted {
+  color: var(--muted);
+}
+.error {
+  color: var(--brick);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--s1);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.table th {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--rule);
+  background: var(--s2);
+}
+.table td {
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.right {
+  text-align: right !important;
+}
+.name {
+  font-weight: 600;
+}
+.live {
+  color: var(--accent);
+}
+.sim {
+  color: var(--kraft);
+}
+@media (max-width: 720px) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+  .table thead,
+  .table thead th {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table tr {
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    border: 0;
+    padding: var(--sp-2) var(--sp-4);
+  }
+  .table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.8125rem;
+    flex: none;
+  }
+}
+
+.naira {
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+
+@media (max-width: 420px) {
+  .table td {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+  }
+  .right {
+    text-align: left !important;
+  }
+}
+
+
+
+/* reserve the space the rate line and the table will fill, so data arriving does not shift the page */
+.rateLine {
+  min-height: 3.2em;
+}
+.skeleton {
+  min-height: 260px;
+  padding: var(--sp-4);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-card);
+}
+

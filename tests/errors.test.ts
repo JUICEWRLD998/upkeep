@@ -19,6 +19,11 @@ describe('toRefusal', () => {
     const r = toRefusal(new Error('The contract function "transfer" reverted with the following reason: Revm error: transaction expired: current block timestamp 1791662880 >= validBefore 1791662879'))
     expect(r.code).toBe('TransactionExpired')
   })
+  it('shows only the keychain verdict, not the wrapper text around it', () => {
+    const r = toRefusal(new Error(real.scope))
+    expect(r.raw).toBe('execution reverted: Account keychain error: CallNotAllowed(CallNotAllowed)')
+    expect(r.raw).not.toContain('The contract function')
+  })
   it('walks nested causes like viem errors', () => {
     const inner = Object.assign(new Error('x'), { details: real.limit })
     const outer = Object.assign(new Error('outer'), { shortMessage: 'ContractFunctionExecutionError', cause: inner })
@@ -30,3 +35,4 @@ describe('toRefusal', () => {
     expect(r.raw).toContain('network unreachable')
   })
 })
+

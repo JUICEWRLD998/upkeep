@@ -1,10 +1,12 @@
-import { spawn } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
+import { execFileSync, spawn } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 export const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+const FIND = (label) => `((want) => { let e = [...document.querySelectorAll("[aria-label]")].find((x) => x.getAttribute("aria-label") === want); if (!e) { for (const l of document.querySelectorAll("label")) { const s = l.querySelector("span"); if (s && s.textContent.trim() === want) { e = l.querySelector("input,select,textarea"); break } } } return e })(${JSON.stringify(label)})`
 
 export async function launch(port, passkey) {
   const dir = mkdtempSync(join(tmpdir(), `upkeep-e2e-${port}-`))
@@ -15,7 +17,9 @@ export async function launch(port, passkey) {
   await new Promise((r) => (ws.onopen = r))
   let id = 0
   const pending = new Map()
-  ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id) } }
+  const errors = []
+  const listeners = new Map()
+  ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id) } else if (listeners.has(d.method)) listeners.get(d.method)(d.params); else if (d.method === 'Runtime.exceptionThrown') errors.push(d.params.exceptionDetails?.exception?.description || d.params.exceptionDetails?.text || 'exception'); else if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errors.push((d.params.args || []).map((a) => a.value ?? a.description ?? '').join(' ').slice(0, 300)) }
   const send = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })) })
   await send('Page.enable'); await send('Runtime.enable')
   if (passkey) {
@@ -34,10 +38,38 @@ export async function launch(port, passkey) {
     waitText: async (needle, ms = 60000) => { const end = Date.now() + ms; while (Date.now() < end) { try { if ((await js('document.body?.innerText ?? ""')).includes(needle)) return true } catch {} await sleep(500) } return false },
     click: (label) => js(`(() => { const els = [...document.querySelectorAll('button,a')]; const e = els.find((x) => x.innerText.trim() === ${JSON.stringify(label)} && !x.disabled); if (!e) return false; e.click(); return true })()`),
     waitClick: async (label, ms = 30000) => { const end = Date.now() + ms; while (Date.now() < end) { try { if (await api.click(label)) return true } catch {} await sleep(500) } return false },
-    fill: (aria, value) => js(`(() => { const e = document.querySelector('[aria-label=${JSON.stringify(aria)}]'); if (!e) return false; const proto = e.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(e, ${JSON.stringify(value)}); e.dispatchEvent(new Event(e.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); return true })()`),
-    value: (aria) => js(`document.querySelector('[aria-label=${JSON.stringify(aria)}]')?.value ?? null`),
-    close: () => { try { ws.close() } catch {} proc.kill() },
+    // Finds a control by its aria-label, or by the visible text of the <label> that wraps it.
+    find: FIND,
+    fill: (aria, value) => js(`(() => { const e = ${FIND(aria)}; if (!e) return false; const proto = e.tagName === "SELECT" ? HTMLSelectElement.prototype : e.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, "value").set.call(e, ${JSON.stringify(value)}); e.dispatchEvent(new Event(e.tagName === "SELECT" ? "change" : "input", { bubbles: true })); return true })()`),
+    value: (aria) => js(`(() => { const e = ${FIND(aria)}; return e ? e.value : null })()`),
+    // Viewport + colour scheme, then a PNG screenshot written to `path` (scale 1 keeps files small).
+    resize: async (width, height, scheme = 'dark', scale = 1) => {
+      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 700 })
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] })
+      await sleep(300)
+    },
+    shot: async (path, fullPage = false) => {
+      const { writeFileSync } = await import('node:fs')
+      const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: fullPage })
+      writeFileSync(path, Buffer.from(r.result.data, 'base64'))
+      return path
+    },
+    errors,
+    on: (method, cb) => listeners.set(method, cb),
+    send,
+    // Kill the whole Chrome tree, then delete the throwaway profile. Each profile is 50 to 70 MB; left behind they filled
+    // the disk (ENOSPC mid-run, 2026-10-11, 4.5 GB across 87 folders).
+    close: () => {
+      try { ws.close() } catch {}
+      try { execFileSync('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' }) } catch { proc.kill() }
+      for (let i = 0; i < 30; i++) {
+        try { rmSync(dir, { recursive: true, force: true }); break } catch { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100) }
+      }
+    },
   }
   return api
 }
+
+
+
 

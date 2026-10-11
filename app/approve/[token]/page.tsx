@@ -1,16 +1,31 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getAddress, isAddress, type Address } from 'viem'
 import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts'
+import { Button } from '@/components/Button'
+import { CopyField } from '@/components/CopyField'
+import { Envelope } from '@/components/Envelope'
+import { Field, Input, Select } from '@/components/Field'
+import { Money } from '@/components/Money'
 import { AmountError, parseAmount } from '@/lib/upkeep/amounts'
 import { authorizeKey, PolicyError } from '@/lib/upkeep/keys'
 import { LinkError, decodeKeyReturn, encodePayeeHint, type KeyReturn } from '@/lib/upkeep/links'
 import { PERIODS, type PeriodChoice } from '@/lib/upkeep/period'
 import { restoreSender, senderClient } from '@/lib/upkeep/sender'
 import { payeeLabels, relatives } from '@/lib/upkeep/store'
+import styles from './approve.module.css'
 
 type Row = { label: string; address: string }
+
+function previewOf(text: string): bigint {
+  try {
+    return parseAmount(text)
+  } catch {
+    return 0n
+  }
+}
 type DeskPayee = { id: number; label: string; bank: string; accountName: string; last4: string; address: Address }
 
 export default function Approve() {
@@ -22,10 +37,10 @@ export default function Approve() {
   const [rows, setRows] = useState<Row[]>([{ label: '', address: '' }])
   const [busy, setBusy] = useState(false)
   const [readyLink, setReadyLink] = useState('')
-  const [copied, setCopied] = useState(false)
   const sender = useMemo(() => (typeof window === 'undefined' ? null : restoreSender()), [])
   const [desk, setDesk] = useState<DeskPayee[]>([])
   const [deskMsg, setDeskMsg] = useState('')
+  const [deskBusy, setDeskBusy] = useState(false)
   const [form, setForm] = useState({ label: '', bank: '', accountName: '', last4: '' })
 
   useEffect(() => {
@@ -42,7 +57,7 @@ export default function Approve() {
     }
   }, [sender])
 
-  // Put a desk payee into the first empty row, or add a row. The chain's payee list is what the key will be limited to.
+  // Put a desk payee into the first empty row, or add a row. The key is limited to exactly the addresses in these rows.
   function pickDeskPayee(p: DeskPayee) {
     setRows((rs) => {
       if (rs.some((r) => r.address.toLowerCase() === p.address.toLowerCase())) return rs
@@ -55,6 +70,7 @@ export default function Approve() {
   async function addDeskPayee() {
     if (!sender) return
     setDeskMsg('')
+    setDeskBusy(true)
     try {
       const res = await fetch('/api/desk/payees', {
         method: 'POST',
@@ -72,6 +88,8 @@ export default function Approve() {
       setDeskMsg(`${j.label} added at the payout desk.`)
     } catch {
       setDeskMsg('Could not reach the payout desk. Try again.')
+    } finally {
+      setDeskBusy(false)
     }
   }
 
@@ -105,9 +123,9 @@ export default function Approve() {
         expiry: Math.floor(Date.now() / 1000) + 30 * 24 * 3600,
       })
       payeeLabels.merge(payees.map((p) => ({ address: p.address, label: p.label })))
-      relatives.upsert({ nonce: ret.nonce, name: ret.name, invitedAt: Date.now(), keyId: ret.key.address })
+      relatives.upsert({ nonce: ret.nonce, name: ret.name, invitedAt: Date.now(), keyId: ret.key.address, limit: limitUnits.toString() })
       const hint = encodePayeeHint(payees.map((p) => ({ address: p.address, label: p.label })))
-      setReadyLink(`${location.origin}/home?k=${ret.nonce}&p=${hint}`)
+      setReadyLink(`${location.origin}/home?k=${ret.nonce}&p=${hint}&l=${limitUnits.toString()}`)
     } catch (e) {
       if (e instanceof AmountError || e instanceof PolicyError) setError(e.message)
       else setError(`The network did not accept the approval: ${(e as { shortMessage?: string }).shortMessage ?? (e as Error).message}`.slice(0, 400))
@@ -116,34 +134,31 @@ export default function Approve() {
     }
   }
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(readyLink)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
-  }
+  // The preview envelope shows the budget being set. An invalid or empty amount shows an empty envelope, never an error.
+  const previewUnits = previewOf(limit)
 
   if (error && !ret)
     return (
-      <main>
-        <h1>Upkeep</h1>
-        <p role="alert">{error}</p>
+      <main className={styles.page}>
+        <h1>This link did not work</h1>
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
+        <Link href="/send">Back to your console</Link>
       </main>
     )
   if (!ret)
     return (
-      <main>
-        <p>Reading link...</p>
+      <main className={styles.page}>
+        <p className={styles.muted}>Reading link...</p>
       </main>
     )
   if (!sender)
     return (
-      <main>
+      <main className={styles.page}>
         <h1>Approve {ret.name}&apos;s key</h1>
         <p>
-          This browser has no sender account. Open <a href="/send">the sender page</a> on the device where you made your account, then open this link
+          This browser has no sender account. Open <Link href="/send">the sender page</Link> on the device where you made your account, then open this link
           there.
         </p>
       </main>
@@ -151,86 +166,148 @@ export default function Approve() {
 
   if (readyLink)
     return (
-      <main>
-        <h1>{ret.name}&apos;s key is active</h1>
-        <p>The network now lets this key pay only the payees you listed, up to your limit.</p>
-        <p>Send {ret.name} this link to open the upkeep:</p>
-        <textarea readOnly value={readyLink} rows={4} style={{ width: '100%' }} aria-label="Link to send to the relative" />
-        <p>
-          <button onClick={copy}>{copied ? 'Copied' : 'Copy link'}</button> <a href="/send">Back to your console</a>
-        </p>
+      <main className={styles.page}>
+        <section className={styles.done}>
+          <div className={styles.doneArt} aria-hidden="true">
+            <Envelope remaining={previewUnits} limit={previewUnits} label={`${ret.name}'s envelope`} />
+          </div>
+          <div className={styles.doneText}>
+            <h1>{ret.name}&apos;s key is active</h1>
+            <p>The network now lets this key pay only the payees you listed, up to your limit.</p>
+            <p>Send {ret.name} this link to open the upkeep:</p>
+            <CopyField value={readyLink} label="Link to send to the relative" />
+            <Link href="/send" className={styles.back}>
+              Back to your console
+            </Link>
+          </div>
+        </section>
       </main>
     )
 
   return (
-    <main>
-      <h1>Approve {ret.name}&apos;s key</h1>
-      <p>
-        Key address: <code>{ret.key.address}</code>
-      </p>
-      <p>Check that this is the key {ret.name} sent you. You can turn it off at any time.</p>
-
-      <h2>Budget</h2>
-      <label>
-        Dollars{' '}
-        <input value={limit} onChange={(e) => setLimit(e.target.value)} inputMode="decimal" aria-label="Budget in dollars" />
-      </label>{' '}
-      <select value={period} onChange={(e) => setPeriod(e.target.value as PeriodChoice)} aria-label="Refill period">
-        {Object.entries(PERIODS).map(([k, v]) => (
-          <option key={k} value={k}>
-            {v.label}
-          </option>
-        ))}
-      </select>
-
-      <h2>Who {ret.name} may pay</h2>
-      <p>Only these accounts. Anything else is refused by the network.</p>
-      {rows.map((r, i) => (
-        <p key={i}>
-          <input value={r.label} onChange={(e) => setRow(i, { label: e.target.value })} placeholder="Name (Pharmacy)" aria-label={`Payee ${i + 1} name`} />{' '}
-          <input value={r.address} onChange={(e) => setRow(i, { address: e.target.value })} placeholder="0x... address" aria-label={`Payee ${i + 1} address`} size={44} />{' '}
-          <button type="button" onClick={() => setRow(i, { address: privateKeyToAddress(generatePrivateKey()) })}>
-            Make a test address
-          </button>
+    <main className={styles.page}>
+      <header className={styles.head}>
+        <h1>Approve {ret.name}&apos;s key</h1>
+        <p className={styles.muted}>
+          Key address <code>{ret.key.address}</code>. Check that this is the key {ret.name} sent you. You can turn it off at any time.
         </p>
-      ))}
-      <p>
-        <button type="button" onClick={() => setRows((r) => [...r, { label: '', address: '' }])}>
-          Add another payee
-        </button>
-      </p>
-      <p>A test address is a fresh account that nobody holds the key to. It is only for trying the product on the test network.</p>
+      </header>
 
-      <h2>Pay into a Nigerian bank account</h2>
-      <p>
-        The payout desk gives each bank payee its own deposit address on the network. The naira credit is <strong>simulated</strong> in this
-        product; the dollar payment is real on the test network.
-      </p>
-      {desk.length > 0 && (
-        <p>
-          Your desk payees:{' '}
-          {desk.map((p) => (
-            <button key={p.id} type="button" onClick={() => pickDeskPayee(p)}>
-              Use {p.label} ({p.bank} ••••{p.last4})
-            </button>
-          ))}
-        </p>
-      )}
-      <p>
-        <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Name (Mummy)" aria-label="Desk payee name" />{' '}
-        <input value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} placeholder="Bank (GTBank)" aria-label="Desk payee bank" />{' '}
-        <input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} placeholder="Account name" aria-label="Desk payee account name" />{' '}
-        <input value={form.last4} onChange={(e) => setForm({ ...form, last4: e.target.value })} placeholder="Last 4 digits" inputMode="numeric" maxLength={4} aria-label="Desk payee last 4 digits" size={10} />{' '}
-        <button type="button" onClick={addDeskPayee}>
-          Add through the payout desk
-        </button>
-      </p>
-      {deskMsg && <p role="status">{deskMsg}</p>}
+      <div className={styles.layout}>
+        <div className={styles.form}>
+          <section className={styles.card}>
+            <h2>Budget</h2>
+            <div className={styles.pair}>
+              <Field label="Budget in dollars">
+                <Input value={limit} onChange={(e) => setLimit(e.target.value)} inputMode="decimal" autoComplete="off" />
+              </Field>
+              <Field label="Refills">
+                <Select value={period} onChange={(e) => setPeriod(e.target.value as PeriodChoice)}>
+                  {Object.entries(PERIODS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          </section>
 
-      {error && <p role="alert">{error}</p>}
-      <button disabled={busy} onClick={approve}>
-        {busy ? 'Waiting for your passkey and the network...' : 'Approve with my passkey'}
-      </button>
+          <section className={styles.card}>
+            <h2>Who {ret.name} may pay</h2>
+            <p className={styles.muted}>Only these accounts. Anything else is refused by the network.</p>
+            <ul className={styles.rows}>
+              {rows.map((r, i) => (
+                <li key={i} className={styles.row}>
+                  <Field label="Name">
+                    <Input value={r.label} onChange={(e) => setRow(i, { label: e.target.value })} placeholder="Pharmacy" aria-label={`Payee ${i + 1} name`} autoComplete="off" />
+                  </Field>
+                  <Field label="Address">
+                    <Input value={r.address} onChange={(e) => setRow(i, { address: e.target.value })} placeholder="0x..." aria-label={`Payee ${i + 1} address`} autoComplete="off" />
+                  </Field>
+                  <div className={styles.rowActions}>
+                    <Button variant="quiet" onClick={() => setRow(i, { address: privateKeyToAddress(generatePrivateKey()) })}>
+                      Make a test address
+                    </Button>
+                    {rows.length > 1 && (
+                      <Button variant="quiet" aria-label={`Remove payee ${i + 1}`} onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div>
+              <Button variant="secondary" onClick={() => setRows((r) => [...r, { label: '', address: '' }])}>
+                Add another payee
+              </Button>
+            </div>
+            <p className={styles.muted}>A test address is a fresh account that nobody holds the key to. It is only for trying the product on the test network.</p>
+          </section>
+
+          <section className={styles.card}>
+            <h2>Pay into a Nigerian bank account</h2>
+            <p className={styles.muted}>
+              The payout desk gives each bank payee its own deposit address on the network. The dollar payment is real on the test network. The naira
+              credit is <strong>simulated</strong> in this product.
+            </p>
+            {desk.length > 0 && (
+              <div className={styles.chips}>
+                {desk.map((p) => (
+                  <Button key={p.id} variant="secondary" onClick={() => pickDeskPayee(p)}>
+                    Use {p.label} ({p.bank} ••••{p.last4})
+                  </Button>
+                ))}
+              </div>
+            )}
+            <div className={styles.deskForm}>
+              <Field label="Name">
+                <Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Mummy" aria-label="Desk payee name" autoComplete="off" />
+              </Field>
+              <Field label="Bank">
+                <Input value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} placeholder="GTBank" aria-label="Desk payee bank" autoComplete="off" />
+              </Field>
+              <Field label="Account name">
+                <Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} aria-label="Desk payee account name" autoComplete="off" />
+              </Field>
+              <Field label="Last 4 digits" hint="We keep only these four digits.">
+                <Input value={form.last4} onChange={(e) => setForm({ ...form, last4: e.target.value })} inputMode="numeric" maxLength={4} aria-label="Desk payee last 4 digits" autoComplete="off" />
+              </Field>
+            </div>
+            <div>
+              <Button variant="secondary" loading={deskBusy} onClick={addDeskPayee}>
+                Add through the payout desk
+              </Button>
+            </div>
+            {deskMsg && <p role="status">{deskMsg}</p>}
+          </section>
+
+          {error && (
+            <p role="alert" className={styles.error}>
+              {error}
+            </p>
+          )}
+          <div>
+            <Button loading={busy} onClick={approve}>
+              {busy ? 'Waiting for your passkey and the network...' : 'Approve with my passkey'}
+            </Button>
+          </div>
+        </div>
+
+        <aside className={styles.preview} aria-label="Preview of the envelope">
+          <Envelope remaining={previewUnits} limit={previewUnits} tone="compact" label={`${ret.name}'s envelope`} />
+          <div className={styles.previewNum}>
+            <Money units={previewUnits} fit="2.25rem" />
+          </div>
+          <p className={styles.muted}>
+            {ret.name} will be able to spend this much {PERIODS[period].label.toLowerCase()}, at {rows.filter((r) => r.address.trim()).length || 'no'} payee
+            {rows.filter((r) => r.address.trim()).length === 1 ? '' : 's'}.
+          </p>
+        </aside>
+      </div>
     </main>
   )
 }
+
+

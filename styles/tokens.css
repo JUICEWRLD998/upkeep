@@ -1,0 +1,100 @@
+/*
+ * Upkeep tokens. Custom OKLCH palette from the subject (kraft envelope, teller slip, naira green) on a deep
+ * blue-black ground. One accent = the call-to-action colour; kraft, brick and sky are support hues with jobs:
+ *   kraft = the envelope and anything pending, brick = refusal, sky = links and information.
+ * Surfaces are tinted toward the palette (chroma 0.008-0.03). Both themes are designed; dark is the default tone,
+ * light is warm paper. Measured by scripts/measure-palette.mjs. Every colour in page CSS is var(--...).
+ */
+:root {
+  color-scheme: light dark;
+
+  /* light: warm paper */
+  --ground: oklch(0.965 0.012 85);
+  --s1: oklch(0.985 0.008 85);
+  --s2: oklch(0.935 0.016 85);
+  --rule: oklch(0.85 0.02 85);
+  --ink: oklch(0.22 0.025 250);
+  --ink-2: oklch(0.38 0.025 250);
+  --muted: oklch(0.48 0.025 250);
+  --accent: oklch(0.50 0.11 168);
+  --accent-ink: oklch(0.985 0.008 85);
+  --kraft: oklch(0.52 0.10 65);
+  --kraft-fill: oklch(0.78 0.10 78);
+  --kraft-deep: oklch(0.90 0.05 82);
+  --brick: oklch(0.50 0.17 25);
+  --sky: oklch(0.46 0.10 235);
+
+  --shadow-1: 0 1px 0 oklch(0.2 0.02 250 / 0.06), 0 1px 3px oklch(0.2 0.02 250 / 0.08);
+  --shadow-2: 0 1px 0 oklch(0.2 0.02 250 / 0.06), 0 6px 16px oklch(0.2 0.02 250 / 0.10);
+
+  /* type */
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-body: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* space (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 72px;
+
+  /* radii: outer = inner + padding, so nested corners stay concentric */
+  --r-card: 16px;
+  --r-inner: 10px;
+  --r-chip: 6px;
+
+  --target: 44px;
+
+  /* motion (mirrored in lib/motion.ts: change both together) */
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: oklch(0.17 0.020 250);
+    --s1: oklch(0.21 0.022 250);
+    --s2: oklch(0.25 0.024 250);
+    --rule: oklch(0.33 0.025 250);
+    --ink: oklch(0.95 0.010 250);
+    --ink-2: oklch(0.80 0.015 250);
+    --muted: oklch(0.68 0.020 250);
+    --accent: oklch(0.80 0.14 168);
+    --accent-ink: oklch(0.17 0.020 250);
+    --kraft: oklch(0.76 0.10 75);
+    --kraft-fill: oklch(0.72 0.09 75);
+    --kraft-deep: oklch(0.30 0.04 75);
+    --brick: oklch(0.72 0.16 25);
+    --sky: oklch(0.78 0.09 235);
+    --shadow-1: none;
+    --shadow-2: 0 8px 24px oklch(0.05 0.02 250 / 0.5);
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: oklch(0.17 0.020 250);
+  --s1: oklch(0.21 0.022 250);
+  --s2: oklch(0.25 0.024 250);
+  --rule: oklch(0.33 0.025 250);
+  --ink: oklch(0.95 0.010 250);
+  --ink-2: oklch(0.80 0.015 250);
+  --muted: oklch(0.68 0.020 250);
+  --accent: oklch(0.80 0.14 168);
+  --accent-ink: oklch(0.17 0.020 250);
+  --kraft: oklch(0.76 0.10 75);
+  --kraft-fill: oklch(0.72 0.09 75);
+  --kraft-deep: oklch(0.30 0.04 75);
+  --brick: oklch(0.72 0.16 25);
+  --sky: oklch(0.78 0.09 235);
+  --shadow-1: none;
+  --shadow-2: 0 8px 24px oklch(0.05 0.02 250 / 0.5);
+}
+

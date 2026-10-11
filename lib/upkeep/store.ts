@@ -18,7 +18,7 @@ function write(key: string, value: unknown) {
   }
 }
 
-export type Relative = { nonce: string; name: string; invitedAt: number; keyId?: Address }
+export type Relative = { nonce: string; name: string; invitedAt: number; keyId?: Address; /** The limit the sender set, in token base units. A display hint for the envelope level; the dollars left always come from the network. */ limit?: string }
 export type PayeeLabel = { address: Address; label: string }
 
 export const relatives = {
@@ -44,4 +44,13 @@ export const payeeLabels = {
     for (const p of items) map.set(p.address.toLowerCase(), p)
     write('upkeep:payees', [...map.values()])
   },
+}
+
+/**
+ * The relative's copy of the limit hint, from the ready link. It only sizes the envelope level; the amount left is
+ * read from the network. When no hint exists the level falls back to the largest amount seen this visit.
+ */
+export const limitHint = {
+  get: (nonce: string) => read<string | null>(`upkeep:limit:${nonce}`, null),
+  set: (nonce: string, units: string) => write(`upkeep:limit:${nonce}`, units),
 }
