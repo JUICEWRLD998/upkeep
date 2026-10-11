@@ -50,15 +50,15 @@ try {
 
   await B.goto(ready)
   step('B sees the bank payee by name', await B.waitText('Mummy GTB (GTBank', 40000))
-  const payee = await B.js(`[...document.querySelector('[aria-label="Who to pay"]').options].find((o) => o.value)?.value`)
+  const payee = await B.js(`[...${B.find('Who to pay')}.options].find((o) => o.value)?.value`)
   await B.fill('Who to pay', payee)
   await B.fill('Amount', '4')
   await B.waitClick('Pay')
-  step('B pays the bank payee $4', await B.waitText('paid.', 60000))
+  step('B pays the bank payee $4', await B.waitText('PAID', 60000))
   step('budget is exactly $6.00', await B.waitText('$6.00', 20000))
 
   await A.goto(`${BASE}/send`)
-  step('A feed shows the payment to the bank payee', await A.waitText('Mummy paid $4.00 to Mummy GTB', 40000))
+  step('A feed shows the payment to the bank payee', (await A.waitText('Mummy GTB', 40000)) && (await A.text()).includes('$4.00') && (await A.text()).includes('PAID'))
 
   await B.goto(`${BASE}/desk`)
   step('/desk shows the real dollar payment', (await B.waitText('Dollars (LIVE)', 30000)) && (await B.waitText('$4.00', 60000)))
@@ -75,3 +75,4 @@ try {
   console.log(`\n${results.length - failed}/${results.length} steps passed in ${Math.round((Date.now() - t0) / 1000)} s`)
   process.exit(failed ? 1 : 0)
 }
+

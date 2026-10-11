@@ -18,6 +18,14 @@ import { payeeLabels, relatives } from '@/lib/upkeep/store'
 import styles from './approve.module.css'
 
 type Row = { label: string; address: string }
+
+function previewOf(text: string): bigint {
+  try {
+    return parseAmount(text)
+  } catch {
+    return 0n
+  }
+}
 type DeskPayee = { id: number; label: string; bank: string; accountName: string; last4: string; address: Address }
 
 export default function Approve() {
@@ -127,13 +135,7 @@ export default function Approve() {
   }
 
   // The preview envelope shows the budget being set. An invalid or empty amount shows an empty envelope, never an error.
-  const previewUnits = useMemo(() => {
-    try {
-      return parseAmount(limit)
-    } catch {
-      return 0n
-    }
-  }, [limit])
+  const previewUnits = previewOf(limit)
 
   if (error && !ret)
     return (
@@ -307,3 +309,4 @@ export default function Approve() {
     </main>
   )
 }
+

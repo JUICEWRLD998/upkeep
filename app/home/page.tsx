@@ -37,7 +37,7 @@ function Home() {
   const [formError, setFormError] = useState('')
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [limit, setLimit] = useState<bigint | null>(null)
-  const peak = useRef<bigint>(0n)
+  const [peakUnits, setPeakUnits] = useState<bigint>(0n)
   const counter = useRef(0)
   const pub = useMemo(() => publicClient(), [])
 
@@ -66,7 +66,7 @@ function Home() {
     if (!parent) return
     try {
       const s = await readKeyState(pub, parent.sender, parent.keyId)
-      if (s.remaining > peak.current) peak.current = s.remaining
+      setPeakUnits((p) => (s.remaining > p ? s.remaining : p))
       setState(s)
       setWaiting(s.status === 'pending') // the network has no record of the key until the sender approves it
     } catch {
@@ -137,7 +137,7 @@ function Home() {
     )
 
   const turnedOff = state.status === 'revoked' || state.expiry * 1000 < now
-  const level = limit ?? (peak.current > 0n ? peak.current : 1n)
+  const level = limit ?? (peakUnits > 0n ? peakUnits : 1n)
   return (
     <main className={styles.page}>
       <header className={styles.head}>
@@ -246,3 +246,4 @@ export default function Page() {
     </Suspense>
   )
 }
+

@@ -1,15 +1,18 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { Button } from '@/components/Button'
+import { CopyField } from '@/components/CopyField'
+import { Envelope } from '@/components/Envelope'
 import { LinkError, decodeInvite, encodeKeyReturn, type Invite } from '@/lib/upkeep/links'
 import { createParentKey, loadParentKey } from '@/lib/upkeep/parentKey'
+import styles from './join.module.css'
 
 export default function Join() {
   const { invite: token } = useParams<{ invite: string }>()
   const [invite, setInvite] = useState<Invite | null>(null)
   const [returnLink, setReturnLink] = useState('')
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -32,52 +35,54 @@ export default function Join() {
     }
   }, [token])
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(returnLink)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
-  }
-
   if (error)
     return (
-      <main>
-        <h1>Upkeep</h1>
-        <p role="alert">{error}</p>
+      <main className={styles.page}>
+        <h1>This invite did not work</h1>
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
       </main>
     )
   if (!invite)
     return (
-      <main>
-        <p>Opening invite...</p>
+      <main className={styles.page}>
+        <p className={styles.muted}>Opening invite...</p>
       </main>
     )
 
   return (
-    <main>
-      <h1>Hello {invite.name}</h1>
-      <p>Someone wants to give you an upkeep key. Your key is made on this phone and never leaves it.</p>
-      <p>
-        Sender account: <code>{invite.sender}</code>
-      </p>
+    <main className={styles.page}>
+      <div className={styles.art} aria-hidden="true">
+        <Envelope remaining={0n} limit={1n} label="Empty envelope" />
+      </div>
+      <header className={styles.head}>
+        <h1>Hello {invite.name}</h1>
+        <p>Someone wants to give you an upkeep key. Your key is made on this phone and never leaves it.</p>
+        <p className={styles.muted}>
+          Sender account <code>{invite.sender}</code>
+        </p>
+      </header>
+
       {returnLink ? (
-        <>
-          <h2>Step 1: send this link back</h2>
-          <p>Send it to the person who invited you (WhatsApp, SMS). It contains only your key&apos;s public address.</p>
-          <textarea readOnly value={returnLink} rows={4} style={{ width: '100%' }} aria-label="Link to send back" />
-          <p>
-            <button onClick={copy}>{copied ? 'Copied' : 'Copy link'}</button>
-          </p>
-          <h2>Step 2: wait for approval</h2>
-          <p>
-            When they approve, they will send you a link to open your upkeep. Or{' '}
-            <a href={`/home?k=${invite.nonce}`}>open it here</a> to check.
-          </p>
-        </>
+        <ol className={styles.steps}>
+          <li className={styles.step}>
+            <h2>Step 1: send this link back</h2>
+            <p className={styles.muted}>Send it to the person who invited you (WhatsApp, SMS). It contains only your key&apos;s public address.</p>
+            <CopyField value={returnLink} label="Link to send back" />
+          </li>
+          <li className={styles.step}>
+            <h2>Step 2: wait for approval</h2>
+            <p className={styles.muted}>When they approve, they will send you a link to open your upkeep.</p>
+            <a className={styles.open} href={`/home?k=${invite.nonce}`}>
+              Open it here to check
+            </a>
+          </li>
+        </ol>
       ) : (
-        <p>Making your key...</p>
+        <Button loading disabled>
+          Making your key...
+        </Button>
       )}
     </main>
   )

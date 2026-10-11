@@ -46,12 +46,12 @@ try {
 
   await B.goto(ready)
   step('B sees the budget from the chain', await B.waitText('$10.00', 40000))
-  const payee = await B.js(`[...document.querySelector('[aria-label="Who to pay"]').options].find((o) => o.value)?.value`)
-  step('B sees the labelled payee', (await B.js(`document.querySelector('[aria-label="Who to pay"]').innerText`)).includes('Pharmacy'))
+  const payee = await B.js(`[...${B.find('Who to pay')}.options].find((o) => o.value)?.value`)
+  step('B sees the labelled payee', (await B.js(`${B.find('Who to pay')}.innerText`)).includes('Pharmacy'))
   await B.fill('Who to pay', payee)
   await B.fill('Amount', '4')
   await B.waitClick('Pay')
-  step('B pays the pharmacy $4', await B.waitText('paid.', 60000))
+  step('B pays the pharmacy $4', await B.waitText('PAID', 60000))
   step('B budget is exactly $6.00 (fee sponsored)', await B.waitText('$6.00', 20000))
 
   const stranger = '0x' + 'ab'.repeat(20)
@@ -65,7 +65,7 @@ try {
   step('chain refuses over-limit', await B.waitText('SpendingLimitExceeded', 40000))
 
   await A.goto(`${BASE}/send`)
-  step('A feed shows Mummy paid $4.00', await A.waitText('Mummy paid $4.00', 40000))
+  step('A feed shows Mummy paid $4.00 with a PAID stamp', (await A.waitText('Mummy paid', 40000)) && (await A.text()).includes('$4.00') && (await A.text()).includes('PAID'))
   await A.waitClick('Turn off')
   const offOk = await A.waitText('turned off', 60000)
   step('A turns the key off', offOk)
@@ -88,3 +88,5 @@ try {
   console.log(`\n${results.length - failed}/${results.length} steps passed in ${Math.round((Date.now() - t0) / 1000)} s`)
   process.exit(failed ? 1 : 0)
 }
+
+

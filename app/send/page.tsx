@@ -33,7 +33,7 @@ export default function Send() {
   const [feed, setFeed] = useState<FeedItem[]>([])
   const [fresh, setFresh] = useState<Set<string>>(new Set())
   const seen = useRef<Set<string> | null>(null)
-  const peak = useRef<Record<string, bigint>>({})
+  const [peaks, setPeaks] = useState<Record<string, bigint>>({})
   const [name, setName] = useState('')
   const [invite, setInvite] = useState('')
   const [pasted, setPasted] = useState('')
@@ -69,7 +69,7 @@ export default function Send() {
         try {
           const st = await readKeyState(pub, addr, r.keyId)
           next[r.nonce] = st
-          if (st.remaining > (peak.current[r.nonce] ?? 0n)) peak.current[r.nonce] = st.remaining
+          setPeaks((p) => (st.remaining > (p[r.nonce] ?? 0n) ? { ...p, [r.nonce]: st.remaining } : p))
         } catch {
           // a network hiccup: this key shows "checking..." until the next poll
         }
@@ -191,7 +191,7 @@ export default function Send() {
 
   /** The envelope level needs a limit. Use the sender's own record; fall back to the largest amount seen this visit. */
   function limitFor(r: Relative, s: KeyState): bigint {
-    return r.limit ? BigInt(r.limit) : (peak.current[r.nonce] ?? s.remaining)
+    return r.limit ? BigInt(r.limit) : (peaks[r.nonce] ?? s.remaining)
   }
 
   if (!ready)
@@ -380,4 +380,5 @@ export default function Send() {
     </main>
   )
 }
+
 
