@@ -25,9 +25,17 @@ export async function POST(request: Request) {
   if (overLimit(`desk:${ip(request)}`, 20)) return Response.json({ error: 'Too many requests. Try again in a minute.' }, { status: 429 })
   try {
     const { masterId } = deskConfig()
-    const body = await request.json().catch(() => null)
-    if (!body || typeof body !== 'object') return Response.json({ error: 'Send JSON.' }, { status: 400 })
-    const saved = await insertPayee(cleanPayee(body))
+    // A payee is four short fields. Anything bigger is not a payee, so refuse it before parsing.
+    const text = await request.text()
+    if (text.length > 8_000) return Response.json({ error: 'That request is too large.' }, { status: 413 })
+    let body: unknown = null
+    try {
+      body = JSON.parse(text)
+    } catch {
+      body = null
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return Response.json({ error: 'Send JSON.' }, { status: 400 })
+    const saved = await insertPayee(cleanPayee(body as Record<string, unknown>))
     return Response.json(view(saved, masterId), { status: 201 })
   } catch (e) {
     if (e instanceof PayeeError) return Response.json({ error: e.message }, { status: 400 })
@@ -50,3 +58,4 @@ export async function GET(request: Request) {
     return Response.json({ error: 'The payout desk could not list payees.' }, { status: 500 })
   }
 }
+

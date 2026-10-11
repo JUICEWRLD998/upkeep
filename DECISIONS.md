@@ -2,6 +2,23 @@
 
 Build-window decisions and measured evidence, newest first. Network: Tempo Moderato testnet, viem 2.57.4.
 
+## 2026-10-11 (Phase 5, hardening the paths a judge actually takes)
+
+Scripts: `scripts/e2e-hardening.mjs` (browser, 25 steps), `scripts/abuse-api.mjs` (relay and desk, 24 checks), `tests/fuzz.test.ts` (links, payee input, amounts; seeded, with a positive control), `tests/relay.test.ts` (sponsor policy). All against the production build, real chain, real database.
+
+- **Real bug, found by the hardening script: three rapid taps on Pay made two real payments.** The button disables from React state, which only updates after a render, so taps in the same instant all saw "not busy". A double-tap on a phone could pay twice. Fix: a `useRef` in-flight flag that flips immediately, in the pay handler and in the approve handler. After the fix three rapid clicks make exactly one payment and the budget drops once ($10.00 to $6.00 after one $4 payment). The failures after it in the first run (budget $4 off, "PAID x3") were knock-on effects of that bug, not separate defects.
+- **Relay: what the sponsor will pay for is now exactly one thing.** A single AlphaUSD `transfer` on Moderato with exact calldata length (138 characters), no value, and a gas limit up to 400,000. Padded calldata, other tokens, `approve`, batches, a 5,000,000 gas request and a non-numeric `value` are all refused and fall back to sender-paid. A non-numeric `value` used to be able to throw inside the validator; it is now a refusal. Checked against the live relay with a funded account as the positive control: the plain transfer gets a `feePayerSignature`, every variant above does not.
+- **Per-account and global caps that a caller cannot spoof.** The IP limiter keys on `x-forwarded-for`, which a caller can fake. The relay now also limits by the transaction's own `from` (20 sponsored requests a minute) and the whole service (300 a minute). Measured: one account sending from 26 different fake IPs got 20 sponsored of 26. A refused request never counts against anyone. The limiter map is pruned so fake keys cannot grow it without bound.
+- **Oversized bodies are refused before parsing:** 413 over 64 KB on the relay and over 8 KB on the desk. A 3 MB body used to be accepted and stored (truncated to 40 characters).
+- **Desk input:** SQL-looking text in every field is stored as plain text (parameterised queries; the table survived), markup characters are stripped, a full account number is refused, bad sender and non-object bodies give 400 with a plain message, no stack traces.
+- **Fuzz:** 4,000 random strings and 2,000 one-character mutations of a valid invite only ever throw `LinkError`, never anything else, and decoded names never contain markup or control characters; 3,000 arbitrary payee objects and 5,000 random amount strings only ever return clean data or throw the expected error type.
+- **Cold starts:** `/home` with no key or a garbage key, `/join/garbage`, `/approve/garbage`, an unknown URL (new designed not-found page) and an approval link on a device with no sender account all say what is wrong in plain words. An upkeep link opened on another device says that phone has no key (keys never travel). A global error page catches anything unexpected.
+- **Failure mid-payment:** with `/api/relay` blocked, the relative is told the network could not complete the payment, nothing is paid and the budget is unchanged; unblocked, one retry charges once. With the sender's network offline the faucet button explains itself and works again when back online.
+- **Reload and a lost phone:** a reload keeps the key and the live budget. Turning a key off tells the old phone; a new invite gives a new device a working key. A hostile relative name (`<img onerror=...>`) renders as plain text and never runs.
+- **The budget refills while the page is open** (test period of 2 minutes): spent to $0.00, then $10.00 again with no reload.
+- **Sponsor self-heal:** the demo fee payer lives on testnet dollars. If its balance drops below 10 AlphaUSD it asks the public faucet for more, at most once every ten minutes, so a depleted sponsor cannot turn into a confusing "not enough dollars" message. Failure is silent and never blocks a payment.
+- **Removed the Phase 0 debug page** (`/spike`) so it does not ship. Its stale generated types broke `npm run typecheck` until `.next` was regenerated.
+- **Seam audit (what is still not real), unchanged and labelled everywhere:** the naira credit is simulated; the desk runs on a stand-in master whose key is lost; test addresses are accounts nobody holds the key to; money is faucet testnet dollars. Not done: real-phone testing on iOS Safari and Android Chrome.
 ## 2026-10-11 (Phase 4, design)
 
 Plan, palette table, beat sheet and the three explored directions: `strategy/design/DESIGN.md` (outside the repo). Screenshots and probe reports: `strategy/design/shots`, `verify-report.json`, `score/`, `filmstrip/`.
@@ -67,4 +84,5 @@ Driver: `scripts/driver-spike.mjs` (headless Chrome over CDP with a WebAuthn vir
 - **S6 virtual payee: PASS** (see IMPLEMENTATION.md section 1). Salt mining can return `undefined`; handle it.
 - Earlier in the session (scratchpad spikes): WebCrypto P256 key as access key works; CallNotAllowed,
   SpendingLimitExceeded, KeyAlreadyRevoked fire; the period renews; fees paid in the capped token count against it.
+
 

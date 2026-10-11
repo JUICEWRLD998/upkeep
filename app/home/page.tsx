@@ -39,6 +39,8 @@ function Home() {
   const [limit, setLimit] = useState<bigint | null>(null)
   const [peakUnits, setPeakUnits] = useState<bigint>(0n)
   const counter = useRef(0)
+  // React state updates after a render, so two taps in the same instant both see busy === ''. A ref flips at once.
+  const inFlight = useRef(false)
   const pub = useMemo(() => publicClient(), [])
 
   useEffect(() => {
@@ -89,7 +91,7 @@ function Home() {
   const short = (a: string) => `${a.slice(0, 6)}...${a.slice(-4)}`
 
   async function submit(to: Address, amountText: string, which: 'pay' | 'other') {
-    if (!parent) return
+    if (!parent || inFlight.current) return
     setFormError('')
     let units: bigint
     try {
@@ -98,8 +100,14 @@ function Home() {
       setFormError(e instanceof AmountError ? e.message : 'Invalid amount')
       return
     }
+    inFlight.current = true
     setBusy(which)
-    const result = await pay(parent.account, { kind: 'relay', url: `${location.origin}/api/relay` }, to, units, { pub, sender: parent.sender })
+    let result: PayResult
+    try {
+      result = await pay(parent.account, { kind: 'relay', url: `${location.origin}/api/relay` }, to, units, { pub, sender: parent.sender })
+    } finally {
+      inFlight.current = false
+    }
     setAttempts((a) => [{ id: ++counter.current, to, amount: units, result }, ...a])
     setBusy('')
     if (result.ok) setAmount('')
@@ -249,6 +257,8 @@ export default function Page() {
     </Suspense>
   )
 }
+
+
 
 
 

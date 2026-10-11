@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getAddress, isAddress, type Address } from 'viem'
@@ -36,6 +36,8 @@ export default function Approve() {
   const [period, setPeriod] = useState<PeriodChoice>('month')
   const [rows, setRows] = useState<Row[]>([{ label: '', address: '' }])
   const [busy, setBusy] = useState(false)
+  // a ref flips at once, so a double tap cannot authorize the same key twice before React re-renders
+  const inFlight = useRef(false)
   const [readyLink, setReadyLink] = useState('')
   const sender = useMemo(() => (typeof window === 'undefined' ? null : restoreSender()), [])
   const [desk, setDesk] = useState<DeskPayee[]>([])
@@ -107,7 +109,7 @@ export default function Approve() {
   const setRow = (i: number, patch: Partial<Row>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)))
 
   async function approve() {
-    if (!ret || !sender) return
+    if (!ret || !sender || inFlight.current) return
     setError('')
     try {
       const limitUnits = parseAmount(limit)
@@ -115,6 +117,7 @@ export default function Approve() {
         if (!isAddress(r.address, { strict: false })) throw new PolicyError(`"${r.label || r.address}" is not a valid address.`)
         return { label: r.label.trim() || 'Payee', address: getAddress(r.address) as Address }
       })
+      inFlight.current = true
       setBusy(true)
       await authorizeKey(senderClient(sender.account), ret.key, {
         limit: limitUnits,
@@ -130,6 +133,7 @@ export default function Approve() {
       if (e instanceof AmountError || e instanceof PolicyError) setError(e.message)
       else setError(`The network did not accept the approval: ${(e as { shortMessage?: string }).shortMessage ?? (e as Error).message}`.slice(0, 400))
     } finally {
+      inFlight.current = false
       setBusy(false)
     }
   }
@@ -309,5 +313,6 @@ export default function Approve() {
     </main>
   )
 }
+
 
 
