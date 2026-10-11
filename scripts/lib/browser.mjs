@@ -36,6 +36,19 @@ export async function launch(port, passkey) {
     waitClick: async (label, ms = 30000) => { const end = Date.now() + ms; while (Date.now() < end) { try { if (await api.click(label)) return true } catch {} await sleep(500) } return false },
     fill: (aria, value) => js(`(() => { const e = document.querySelector('[aria-label=${JSON.stringify(aria)}]'); if (!e) return false; const proto = e.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(e, ${JSON.stringify(value)}); e.dispatchEvent(new Event(e.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); return true })()`),
     value: (aria) => js(`document.querySelector('[aria-label=${JSON.stringify(aria)}]')?.value ?? null`),
+    // Viewport + colour scheme, then a PNG screenshot written to `path` (scale 1 keeps files small).
+    resize: async (width, height, scheme = 'dark', scale = 1) => {
+      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 700 })
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] })
+      await sleep(300)
+    },
+    shot: async (path, fullPage = false) => {
+      const { writeFileSync } = await import('node:fs')
+      const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: fullPage })
+      writeFileSync(path, Buffer.from(r.result.data, 'base64'))
+      return path
+    },
+    send,
     close: () => { try { ws.close() } catch {} proc.kill() },
   }
   return api
