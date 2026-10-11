@@ -79,11 +79,6 @@
   display: grid;
   gap: var(--sp-4);
   margin: 0;
-  padding: var(--sp-5);
-  background: var(--s1);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow-2);
 }
 .envelope {
   display: grid;
@@ -121,32 +116,48 @@
 }
 .steps {
   display: grid;
-  gap: var(--sp-4);
   margin: 0;
   padding: 0;
   list-style: none;
-}
-@media (min-width: 800px) {
-  .steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  border-top: 1px solid var(--rule);
 }
 .step {
   display: grid;
-  gap: var(--sp-2);
-  align-content: start;
-  padding: var(--sp-5);
-  background: var(--s1);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-4);
+  align-items: baseline;
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--rule);
 }
 .step h3 {
   font-size: 1.25rem;
+  grid-column: 2;
+}
+.step p {
+  grid-column: 2;
 }
 .stepNum {
+  grid-row: 1 / span 2;
   color: var(--kraft);
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 500;
+  line-height: 1;
+}
+@media (min-width: 800px) {
+  .step {
+    grid-template-columns: 72px 280px minmax(0, 1fr);
+  }
+  .step h3 {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .step p {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .stepNum {
+    grid-row: 1;
+  }
 }
 .refusals {
   display: grid;
@@ -160,7 +171,6 @@
   gap: var(--sp-1) var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--rule);
-  border-left: 4px solid var(--brick);
   border-radius: var(--r-inner);
   background: var(--s1);
 }
@@ -171,7 +181,11 @@
   }
 }
 .refusal code {
+  justify-self: start;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-chip);
   color: var(--brick);
+  background: color-mix(in oklch, var(--brick) 12%, var(--s1));
   font-weight: 500;
 }
 .real {
@@ -216,3 +230,4 @@
   color: var(--muted);
   font-size: 0.875rem;
 }
+

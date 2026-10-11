@@ -1,3 +1,8 @@
+/* Hallmark · route: custom (bespoke) · structure: product console + phone app, object metaphor (envelope, slips, stamps)
+ * idea: "the slip lands": a payment drops in as a stamped teller slip while the envelope level falls
+ * paper: oklch(0.17 0.020 250) dark / oklch(0.965 0.012 85) light · accent: oklch(0.80 0.14 168) dark / oklch(0.50 0.11 168) light
+ * display: Bricolage Grotesque · body: Geist · mono: Geist Mono · axes: dark+light / geometric-sans / chromatic-green ~168
+ * gates: see strategy/design/DESIGN.md · studied: no */
 @import '../styles/tokens.css';
 
 *,
@@ -7,11 +12,13 @@
 }
 
 html {
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
+  overflow-x: clip;
   margin: 0;
   min-height: 100dvh;
   background: var(--ground);
@@ -101,3 +108,4 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
