@@ -1,0 +1,19 @@
+.stamp {
+  display: inline-block;
+  padding: 1px var(--sp-2);
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font: 700 0.75rem/1.4 var(--font-display);
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  user-select: none;
+}
+.paid {
+  color: var(--accent);
+}
+.refused {
+  color: var(--brick);
+}
+.pending {
+  color: var(--kraft);
+}

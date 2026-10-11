@@ -1,0 +1,9 @@
+.full {
+  width: 100%;
+  height: auto;
+}
+.compact {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}

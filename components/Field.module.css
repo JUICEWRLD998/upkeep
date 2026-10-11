@@ -1,0 +1,46 @@
+.field {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.label {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.control {
+  width: 100%;
+  min-height: var(--target);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-inner);
+  background: var(--s1);
+  color: var(--ink);
+  /* 16px minimum so iOS Safari does not zoom the page when the field is focused */
+  font-size: 1rem;
+  transition: border-color var(--dur-micro) var(--ease-out), background var(--dur-micro) var(--ease-out);
+}
+.control::placeholder {
+  color: var(--muted);
+}
+@media (hover: hover) {
+  .control:hover:not(:disabled) {
+    border-color: color-mix(in oklch, var(--ink) 30%, var(--rule));
+  }
+}
+.control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+.control:disabled {
+  opacity: 0.55;
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.error {
+  color: var(--brick);
+  font-size: 0.8125rem;
+}
