@@ -4,7 +4,7 @@
   margin: 0 auto;
   padding: var(--sp-6) clamp(var(--sp-4), 4vw, var(--sp-6)) var(--sp-8);
   display: grid;
-  gap: var(--sp-8);
+  gap: 0;
 }
 .muted {
   color: var(--muted);
@@ -231,3 +231,32 @@
   font-size: 0.875rem;
 }
 
+
+/* Section spacing follows the content, not a fixed rhythm: the hero breathes, the explanation sits close to it,
+   the rule section is set apart, and the footer is pushed well clear. */
+.page > section:nth-of-type(2) {
+  margin-top: 6rem;
+}
+.page > section:nth-of-type(3) {
+  margin-top: 4rem;
+}
+.page > section:nth-of-type(4) {
+  margin-top: 5rem;
+}
+.footer {
+  margin-top: 7rem;
+}
+@media (max-width: 700px) {
+  .page > section:nth-of-type(2) {
+    margin-top: 4rem;
+  }
+  .page > section:nth-of-type(3) {
+    margin-top: 3rem;
+  }
+  .page > section:nth-of-type(4) {
+    margin-top: 3.5rem;
+  }
+  .footer {
+    margin-top: 4.5rem;
+  }
+}
