@@ -34,6 +34,7 @@ if (!env.DESK_MASTER_SALT) {
   }
   env.DESK_MASTER_SALT = found.salt
   env.DESK_MASTER_ID = found.masterId
+  env.DESK_MASTER_ADDRESS = master.address
   save()
   console.log(`mined in ${Math.round((Date.now() - t0) / 1000)} s, masterId ${found.masterId}`)
 }

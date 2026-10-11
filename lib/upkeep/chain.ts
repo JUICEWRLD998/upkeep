@@ -32,7 +32,16 @@ export function blockRanges(from: bigint, to: bigint, step: bigint = MAX_LOG_RAN
 
 /** Run a log query over [from, to] in RPC-sized pieces, in order, and join the results. */
 export async function chunkedLogs<T>(from: bigint, to: bigint, run: (fromBlock: bigint, toBlock: bigint) => Promise<T[]>): Promise<T[]> {
-  const parts = await Promise.all(blockRanges(from, to).map(([a, b]) => run(a, b)))
+  // One retry per piece: the public RPC occasionally fails a single request, and the pieces run in parallel.
+  const once = async (a: bigint, b: bigint) => {
+    try {
+      return await run(a, b)
+    } catch {
+      await new Promise((r) => setTimeout(r, 400))
+      return run(a, b)
+    }
+  }
+  const parts = await Promise.all(blockRanges(from, to).map(([a, b]) => once(a, b)))
   return parts.flat()
 }
 

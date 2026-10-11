@@ -10,8 +10,8 @@ const step = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'} [${Math.round((Date.now() - t0) / 1000)}s] ${name}${detail ? ' :: ' + detail : ''}`)
 }
 
-const A = await launch(9341, true)
-const B = await launch(9342, false)
+const A = await launch(9400 + Math.floor(Math.random() * 250), true)
+const B = await launch(9700 + Math.floor(Math.random() * 250), false)
 try {
   await A.goto(`${BASE}/send`)
   step('A opens /send as a stranger', await A.waitText('Create my account with a passkey'))

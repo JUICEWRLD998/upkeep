@@ -40,6 +40,7 @@ export async function GET(request: Request) {
     return Response.json({ rows, rate, fromBlock: from.toString(), headBlock: head.toString() })
   } catch (e) {
     if (e instanceof DeskNotReady) return Response.json({ error: e.message }, { status: 503 })
+    console.error('desk ledger failed:', e instanceof Error ? `${e.name}: ${e.message}`.slice(0, 600) : e)
     return Response.json({ error: 'The payout desk ledger could not be read.' }, { status: 500 })
   }
 }

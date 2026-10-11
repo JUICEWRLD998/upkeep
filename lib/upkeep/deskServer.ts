@@ -1,17 +1,24 @@
-import type { Address, Hex } from 'viem'
+import { getAddress, isAddress, type Address, type Hex } from 'viem'
 import { Account } from 'viem/tempo'
 import { plausibleRate, type Rate } from './rate'
 
 /** Server-only desk configuration and the live dollar-to-naira rate. */
 export class DeskNotReady extends Error {}
 
+/**
+ * The server needs only the desk master's id and public address to derive deposit addresses and read the ledger.
+ * The master's private key is used once, by scripts/setup-server-keys.mjs, and is not required at runtime.
+ * (DESK_MASTER_PRIVATE_KEY is still accepted as a fallback source for the address.)
+ */
 export function deskConfig(): { masterId: Hex; master: Address } {
   const masterId = process.env.DESK_MASTER_ID as Hex | undefined
+  const addr = process.env.DESK_MASTER_ADDRESS
   const key = process.env.DESK_MASTER_PRIVATE_KEY as Hex | undefined
-  if (!masterId || !/^0x[0-9a-fA-F]{8}$/.test(masterId) || !key) {
-    throw new DeskNotReady('The payout desk is not set up yet (DESK_MASTER_ID missing).')
+  const master = addr && isAddress(addr, { strict: false }) ? getAddress(addr) : key ? Account.fromSecp256k1(key).address : null
+  if (!masterId || !/^0x[0-9a-fA-F]{8}$/.test(masterId) || !master) {
+    throw new DeskNotReady('The payout desk is not set up yet (DESK_MASTER_ID and DESK_MASTER_ADDRESS are needed).')
   }
-  return { masterId, master: Account.fromSecp256k1(key).address }
+  return { masterId, master }
 }
 
 let cached: { rate: Rate; at: number } | null = null
