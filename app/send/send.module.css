@@ -38,6 +38,13 @@
   display: grid;
   gap: var(--sp-6);
   min-width: 0;
+  /* on phones the envelopes and live payments come before the forms */
+  order: -1;
+}
+@media (min-width: 1024px) {
+  .stage {
+    order: 0;
+  }
 }
 .head {
   display: grid;
@@ -212,3 +219,4 @@
   padding: 0;
   list-style: none;
 }
+

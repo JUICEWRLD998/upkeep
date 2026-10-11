@@ -18,7 +18,8 @@ export async function launch(port, passkey) {
   let id = 0
   const pending = new Map()
   const errors = []
-  ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id) } else if (d.method === 'Runtime.exceptionThrown') errors.push(d.params.exceptionDetails?.exception?.description || d.params.exceptionDetails?.text || 'exception'); else if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errors.push((d.params.args || []).map((a) => a.value ?? a.description ?? '').join(' ').slice(0, 300)) }
+  const listeners = new Map()
+  ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id) } else if (listeners.has(d.method)) listeners.get(d.method)(d.params); else if (d.method === 'Runtime.exceptionThrown') errors.push(d.params.exceptionDetails?.exception?.description || d.params.exceptionDetails?.text || 'exception'); else if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errors.push((d.params.args || []).map((a) => a.value ?? a.description ?? '').join(' ').slice(0, 300)) }
   const send = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })) })
   await send('Page.enable'); await send('Runtime.enable')
   if (passkey) {
@@ -54,10 +55,12 @@ export async function launch(port, passkey) {
       return path
     },
     errors,
+    on: (method, cb) => listeners.set(method, cb),
     send,
     close: () => { try { ws.close() } catch {} proc.kill() },
   }
   return api
 }
+
 
 

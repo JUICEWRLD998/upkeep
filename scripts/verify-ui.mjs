@@ -21,7 +21,7 @@ const OVERFLOW = `(() => { const cw = document.documentElement.clientWidth; let 
 
 async function probeOverflow(page) {
   // planted control first
-  await page.js(`(() => { const d = document.createElement('div'); d.id = '__ctlOverflow'; d.style.cssText = 'position:absolute;left:0;top:0;width:2000px;height:4px'; document.body.appendChild(d) })()`)
+  await page.js(`(() => { const d = document.createElement('div'); d.id = '__ctlOverflow'; d.style.cssText = 'position:absolute;left:0;top:0;width:4000px;height:4px'; document.body.appendChild(d) })()`)
   const ctl = JSON.parse(await page.js(OVERFLOW))
   await page.js(`document.getElementById('__ctlOverflow')?.remove()`)
   if (ctl.worst < 100) return { blind: true }
@@ -107,3 +107,4 @@ try {
   console.log(report.failures.length ? 'FAILURES:\n' + report.failures.map((f) => '  ' + f).join('\n') : 'no failures')
 }
 process.exit(0)
+

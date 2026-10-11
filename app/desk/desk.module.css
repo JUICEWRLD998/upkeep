@@ -63,12 +63,15 @@
   .table td {
     display: block;
   }
-  .table thead {
+  .table thead,
+  .table thead th {
     position: absolute;
     width: 1px;
     height: 1px;
+    padding: 0;
     overflow: hidden;
     clip-path: inset(50%);
+    white-space: nowrap;
   }
   .table tr {
     padding: var(--sp-3) 0;
@@ -92,5 +95,17 @@
 .naira {
   font-family: var(--font-body);
   font-weight: 500;
+}
+
+
+@media (max-width: 420px) {
+  .table td {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+  }
+  .right {
+    text-align: left !important;
+  }
 }
 

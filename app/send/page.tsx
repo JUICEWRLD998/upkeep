@@ -283,7 +283,8 @@ export default function Send() {
             </p>
           )}
 
-          <section aria-label="Keys">
+          <section aria-labelledby="keys-title">
+            <h2 id="keys-title" className="sr-only">Keys</h2>
             {list.length === 0 ? (
               <div className={styles.empty}>
                 <div className={styles.emptyArt} aria-hidden="true">
@@ -380,6 +381,7 @@ export default function Send() {
     </main>
   )
 }
+
 
 
 
